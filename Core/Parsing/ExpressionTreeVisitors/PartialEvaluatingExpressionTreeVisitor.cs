@@ -76,10 +76,10 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors
       if (expression.NodeType == ExpressionType.Lambda || !_partialEvaluationInfo.IsEvaluatableExpression (expression))
         return base.VisitExpression (expression);
 
-      Expression evaluatedExpression;
+      EvaluateResult eval;
       try
       {
-        evaluatedExpression = EvaluateSubtree (expression);
+        eval = EvaluateSubtree(expression);
       }
       catch (Exception ex)
       {
@@ -89,10 +89,16 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors
         return new PartialEvaluationExceptionExpression (ex, baseVisitedExpression);
       }
 
-      if (evaluatedExpression != expression)
-        return EvaluateIndependentSubtrees (evaluatedExpression);
+      if (eval.Continue)
+        return EvaluateIndependentSubtrees(eval.Result);
       
-      return evaluatedExpression;
+      return eval.Result;
+    }
+
+    public struct EvaluateResult
+    {
+      public bool Continue;
+      public Expression Result;
     }
 
     /// <summary>
@@ -111,18 +117,27 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors
         var constantExpression = (ConstantExpression) subtree;
         var valueAsIQueryable = constantExpression.Value as IQueryable;
         if (valueAsIQueryable != null && valueAsIQueryable.Expression != constantExpression)
-          return valueAsIQueryable.Expression;
+          return new EvaluateResult { Result = valueAsIQueryable.Expression, Continue = true };
 
-        return constantExpression;
+        return new EvaluateResult { Continue = false, Result = constantExpression };
       }
-      else
-      {
-        Expression<Func<object>> lambdaWithoutParameters = Expression.Lambda<Func<object>> (Expression.Convert (subtree, typeof (object)));
-        var compiledLambda = lambdaWithoutParameters.Compile();
+      var ua = subtree as UnaryExpression;
+      var isEnum = subtree.NodeType == ExpressionType.Convert && ua != null && ua.Operand.Type.IsEnum;
+      var isNullableEnum = !isEnum && subtree.NodeType == ExpressionType.Convert
+        && ua != null && ua.Type == typeof(int?) && ua.Operand.Type.IsValueType && ua.Operand.Type.IsGenericType
+        && ua.Operand.Type.GetGenericTypeDefinition() == typeof(Nullable<>)
+        && ua.Operand.Type.GetGenericArguments()[0].IsEnum;
 
-        object value = compiledLambda ();
-        return Expression.Constant (value, subtree.Type);
-      }
+      Expression<Func<object>> lambdaWithoutParameters = Expression.Lambda<Func<object>>(Expression.Convert(subtree, typeof(object)));
+      var compiledLambda = lambdaWithoutParameters.Compile();
+
+      var value = compiledLambda();
+
+      if (isEnum)
+        return new EvaluateResult { Continue = false, Result = Expression.Convert(Expression.Constant(Enum.ToObject(ua.Operand.Type, value)), ua.Type) };
+      else if (isNullableEnum)
+        return new EvaluateResult { Continue = false, Result = Expression.Convert(Expression.Constant(Enum.ToObject(ua.Operand.Type.GetGenericArguments()[0], value)), ua.Type) };
+      return new EvaluateResult { Continue = true, Result = Expression.Constant(value, subtree.Type) };
     }
   }
 }

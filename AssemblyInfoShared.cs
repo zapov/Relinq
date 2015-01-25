@@ -15,14 +15,13 @@
 // under the License.
 // 
 
-using System;
 using System.Reflection;
 
-[assembly: AssemblyCompany ("rubicon IT GmbH")]
-[assembly: AssemblyProduct ("re-linq project (relinq.codeplex.com)")]
-[assembly: AssemblyCopyright ("Copyright (c) rubicon IT GmbH, www.rubicon.eu - Licensed under Apache License, Version 2.0")]
-[assembly: AssemblyTrademark ("")]
-[assembly: AssemblyConfiguration ("Build type: Debug")]
-[assembly: AssemblyVersion ("2.0.0.0")]
-[assembly: AssemblyFileVersion ("2.0.0.24009")]
-[assembly: AssemblyInformationalVersion ("2.0.0-x.9 Debug; ")]
+[assembly: AssemblyCompany("rubicon IT GmbH")]
+[assembly: AssemblyProduct("re-linq project (relinq.codeplex.com)")]
+[assembly: AssemblyCopyright("Copyright (c) rubicon IT GmbH, www.rubicon.eu - Licensed under Apache License, Version 2.0")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyConfiguration("Build type: Revenj")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.24009")]
+[assembly: AssemblyInformationalVersion("2.0.0-x.9 Revenj; ")]
