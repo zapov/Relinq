@@ -14,48 +14,42 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Parsing.ExpressionTreeVisitors;
 using Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.ExpressionTreeProcessors
 {
-  /// <summary>
-  /// Applies a given set of transformations to an <see cref="Expression"/> tree. The transformations are provided by an instance of
-  /// <see cref="IExpressionTranformationProvider"/> (eg., <see cref="ExpressionTransformerRegistry"/>).
-  /// </summary>
-  /// <remarks>
-  /// The <see cref="TransformingExpressionTreeProcessor"/> uses the <see cref="TransformingExpressionTreeVisitor"/> to apply the transformations.
-  /// It performs a single visiting run over the <see cref="Expression"/> tree.
-  /// </remarks>
-  public sealed class TransformingExpressionTreeProcessor : IExpressionTreeProcessor
-  {
-    private readonly IExpressionTranformationProvider _provider;
+	/// <summary>
+	/// Applies a given set of transformations to an <see cref="Expression"/> tree. The transformations are provided by an instance of
+	/// <see cref="IExpressionTranformationProvider"/> (eg., <see cref="ExpressionTransformerRegistry"/>).
+	/// </summary>
+	/// <remarks>
+	/// The <see cref="TransformingExpressionTreeProcessor"/> uses the <see cref="TransformingExpressionTreeVisitor"/> to apply the transformations.
+	/// It performs a single visiting run over the <see cref="Expression"/> tree.
+	/// </remarks>
+	public sealed class TransformingExpressionTreeProcessor : IExpressionTreeProcessor
+	{
+		private readonly IExpressionTranformationProvider _provider;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TransformingExpressionTreeProcessor"/> class.
-    /// </summary>
-    /// <param name="provider">A class providing the transformations to apply to the tree, eg., an instance of 
-    /// <see cref="ExpressionTransformerRegistry"/>.</param>
-    public TransformingExpressionTreeProcessor (IExpressionTranformationProvider provider)
-    {
-      ArgumentUtility.CheckNotNull ("provider", provider);
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TransformingExpressionTreeProcessor"/> class.
+		/// </summary>
+		/// <param name="provider">A class providing the transformations to apply to the tree, eg., an instance of 
+		/// <see cref="ExpressionTransformerRegistry"/>.</param>
+		public TransformingExpressionTreeProcessor(IExpressionTranformationProvider provider)
+		{
+			_provider = provider;
+		}
 
-      _provider = provider;
-    }
+		public IExpressionTranformationProvider Provider
+		{
+			get { return _provider; }
+		}
 
-    public IExpressionTranformationProvider Provider
-    {
-      get { return _provider; }
-    }
-
-    public Expression Process (Expression expressionTree)
-    {
-      ArgumentUtility.CheckNotNull ("expressionTree", expressionTree);
-
-      return TransformingExpressionTreeVisitor.Transform (expressionTree, _provider);
-    }
-  }
+		public Expression Process(Expression expressionTree)
+		{
+			return TransformingExpressionTreeVisitor.Transform(expressionTree, _provider);
+		}
+	}
 }

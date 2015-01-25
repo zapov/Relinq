@@ -14,32 +14,28 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.TreeEvaluation
 {
-  public class PartialEvaluationInfo
-  {
-    private readonly HashSet<Expression> _evaluatableExpressions = new HashSet<Expression>();
+	public class PartialEvaluationInfo
+	{
+		private readonly HashSet<Expression> _evaluatableExpressions = new HashSet<Expression>();
 
-    public int Count
-    {
-      get { return _evaluatableExpressions.Count; }
-    }
+		public int Count
+		{
+			get { return _evaluatableExpressions.Count; }
+		}
 
-    public void AddEvaluatableExpression (Expression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
-      _evaluatableExpressions.Add (expression);
-    }
+		public void AddEvaluatableExpression(Expression expression)
+		{
+			_evaluatableExpressions.Add(expression);
+		}
 
-    public bool IsEvaluatableExpression (Expression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
-      return _evaluatableExpressions.Contains (expression);
-    }
-  }
+		public bool IsEvaluatableExpression(Expression expression)
+		{
+			return _evaluatableExpressions.Contains(expression);
+		}
+	}
 }

@@ -22,24 +22,24 @@ using System.Reflection;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.PredefinedTransformations
 {
-  /// <summary>
-  /// Detects <see cref="NewExpression"/> nodes for <see cref="DictionaryEntry"/> and adds <see cref="MemberInfo"/> metadata to those nodes.
-  /// This allows LINQ providers to match member access and constructor arguments more easily.
-  /// </summary>
-  public class DictionaryEntryNewExpressionTransformer : MemberAddingNewExpressionTransformerBase
-  {
-    protected override MemberInfo[] GetMembers (ConstructorInfo constructorInfo, ReadOnlyCollection<Expression> arguments)
-    {
-      return new[] 
-      { 
-          GetMemberForNewExpression (constructorInfo.DeclaringType, "Key"), 
-          GetMemberForNewExpression (constructorInfo.DeclaringType, "Value") 
-      };
-    }
+	/// <summary>
+	/// Detects <see cref="NewExpression"/> nodes for <see cref="DictionaryEntry"/> and adds <see cref="MemberInfo"/> metadata to those nodes.
+	/// This allows LINQ providers to match member access and constructor arguments more easily.
+	/// </summary>
+	public class DictionaryEntryNewExpressionTransformer : MemberAddingNewExpressionTransformerBase
+	{
+		protected override MemberInfo[] GetMembers(ConstructorInfo constructorInfo, ReadOnlyCollection<Expression> arguments)
+		{
+			return new[] 
+			  { 
+				  GetMemberForNewExpression (constructorInfo.DeclaringType, "Key"), 
+				  GetMemberForNewExpression (constructorInfo.DeclaringType, "Value") 
+			  };
+		}
 
-    protected override bool CanAddMembers (Type instantiatedType, ReadOnlyCollection<Expression> arguments)
-    {
-      return instantiatedType == typeof (DictionaryEntry) && arguments.Count == 2;
-    }
-  }
+		protected override bool CanAddMembers(Type instantiatedType, ReadOnlyCollection<Expression> arguments)
+		{
+			return instantiatedType == typeof(DictionaryEntry) && arguments.Count == 2;
+		}
+	}
 }

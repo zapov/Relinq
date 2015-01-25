@@ -42,7 +42,7 @@ namespace Remotion.Utilities
 
     internal static bool IsNullableType_NoArgumentCheck (Type expectedType)
     {
-      return !expectedType.GetTypeInfo().IsValueType || Nullable.GetUnderlyingType (expectedType) != null;
+      return !expectedType.IsValueType || Nullable.GetUnderlyingType (expectedType) != null;
     }
 
     public static Type GetNullableType (Type type)

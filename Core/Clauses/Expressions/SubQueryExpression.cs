@@ -16,36 +16,33 @@
 // 
 using System;
 using System.Linq.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.Expressions
 {
-  /// <summary>
-  /// Represents an <see cref="Expression"/> that holds a subquery. The subquery is held by <see cref="QueryModel"/> in its parsed form.
-  /// </summary>
-  public class SubQueryExpression : Expression
-  {
-    private readonly Type _type;
-    public const ExpressionType ExpressionType = (ExpressionType) 100002;
-    
-    public SubQueryExpression (QueryModel queryModel)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
+	/// <summary>
+	/// Represents an <see cref="Expression"/> that holds a subquery. The subquery is held by <see cref="QueryModel"/> in its parsed form.
+	/// </summary>
+	public class SubQueryExpression : Expression
+	{
+		private readonly Type _type;
+		public const ExpressionType ExpressionType = (ExpressionType)100002;
 
-      QueryModel = queryModel;
-      _type = queryModel.GetOutputDataInfo().DataType;
-    }
+		public SubQueryExpression(QueryModel queryModel)
+		{
+			QueryModel = queryModel;
+			_type = queryModel.GetOutputDataInfo().DataType;
+		}
 
-    public override ExpressionType NodeType
-    {
-      get { return ExpressionType; }
-    }
+		public override ExpressionType NodeType
+		{
+			get { return ExpressionType; }
+		}
 
-    public override Type Type
-    {
-      get { return _type; }
-    }
+		public override Type Type
+		{
+			get { return _type; }
+		}
 
-    public QueryModel QueryModel { get; private set; }
-  }
+		public QueryModel QueryModel { get; private set; }
+	}
 }

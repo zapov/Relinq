@@ -17,58 +17,53 @@
 using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.IntermediateModel
 {
-  /// <summary>
-  /// Acts as a base class for <see cref="IExpressionNode"/>s standing for <see cref="MethodCallExpression"/>s that operate on the result of the query
-  /// rather than representing actual clauses, such as <see cref="CountExpressionNode"/> or <see cref="DistinctExpressionNode"/>.
-  /// </summary>
-  public abstract class ResultOperatorExpressionNodeBase : MethodCallExpressionNodeBase
-  {
-    protected ResultOperatorExpressionNodeBase (
-        MethodCallExpressionParseInfo parseInfo, LambdaExpression optionalPredicate, LambdaExpression optionalSelector)
-        : base (parseInfo)
-    {
-      if (optionalPredicate != null && optionalPredicate.Parameters.Count != 1)
-        throw new ArgumentException ("OptionalPredicate must have exactly one parameter.", "optionalPredicate");
+	/// <summary>
+	/// Acts as a base class for <see cref="IExpressionNode"/>s standing for <see cref="MethodCallExpression"/>s that operate on the result of the query
+	/// rather than representing actual clauses, such as <see cref="CountExpressionNode"/> or <see cref="DistinctExpressionNode"/>.
+	/// </summary>
+	public abstract class ResultOperatorExpressionNodeBase : MethodCallExpressionNodeBase
+	{
+		protected ResultOperatorExpressionNodeBase(
+			MethodCallExpressionParseInfo parseInfo, LambdaExpression optionalPredicate, LambdaExpression optionalSelector)
+			: base(parseInfo)
+		{
+			if (optionalPredicate != null && optionalPredicate.Parameters.Count != 1)
+				throw new ArgumentException("OptionalPredicate must have exactly one parameter.", "optionalPredicate");
 
-      if (optionalSelector != null && optionalSelector.Parameters.Count != 1)
-        throw new ArgumentException ("OptionalSelector must have exactly one parameter.", "optionalSelector");
+			if (optionalSelector != null && optionalSelector.Parameters.Count != 1)
+				throw new ArgumentException("OptionalSelector must have exactly one parameter.", "optionalSelector");
 
-      if (optionalPredicate != null)
-        Source = new WhereExpressionNode (parseInfo, optionalPredicate);
+			if (optionalPredicate != null)
+				Source = new WhereExpressionNode(parseInfo, optionalPredicate);
 
-      if (optionalSelector != null)
-      {
-        var newParseInfo = new MethodCallExpressionParseInfo (parseInfo.AssociatedIdentifier, Source, parseInfo.ParsedExpression);
-        Source = new SelectExpressionNode (newParseInfo, optionalSelector);
-      }
+			if (optionalSelector != null)
+			{
+				var newParseInfo = new MethodCallExpressionParseInfo(parseInfo.AssociatedIdentifier, Source, parseInfo.ParsedExpression);
+				Source = new SelectExpressionNode(newParseInfo, optionalSelector);
+			}
 
-      ParsedExpression = parseInfo.ParsedExpression;
-    }
+			ParsedExpression = parseInfo.ParsedExpression;
+		}
 
-    protected abstract ResultOperatorBase CreateResultOperator (ClauseGenerationContext clauseGenerationContext);
+		protected abstract ResultOperatorBase CreateResultOperator(ClauseGenerationContext clauseGenerationContext);
 
-    public MethodCallExpression ParsedExpression { get; private set; }
+		public MethodCallExpression ParsedExpression { get; private set; }
 
-    protected override QueryModel ApplyNodeSpecificSemantics (QueryModel queryModel, ClauseGenerationContext clauseGenerationContext)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
+		protected override QueryModel ApplyNodeSpecificSemantics(QueryModel queryModel, ClauseGenerationContext clauseGenerationContext)
+		{
+			var resultOperator = CreateResultOperator(clauseGenerationContext);
+			queryModel.ResultOperators.Add(resultOperator);
+			return queryModel;
+		}
 
-      var resultOperator = CreateResultOperator (clauseGenerationContext);
-      queryModel.ResultOperators.Add (resultOperator);
-      return queryModel;
-    }
-
-    protected override QueryModel WrapQueryModelAfterEndOfQuery (QueryModel queryModel, ClauseGenerationContext clauseGenerationContext)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
-
-      // Result operators can safely be appended to the previous query model even after another result operator, so do not wrap the previous
-      // query model.
-      return queryModel;
-    }
-  }
+		protected override QueryModel WrapQueryModelAfterEndOfQuery(QueryModel queryModel, ClauseGenerationContext clauseGenerationContext)
+		{
+			// Result operators can safely be appended to the previous query model even after another result operator, so do not wrap the previous
+			// query model.
+			return queryModel;
+		}
+	}
 }

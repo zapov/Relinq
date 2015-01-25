@@ -14,23 +14,20 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents a <see cref="ResultOperatorBase"/> that is executed on a sequence, returning a new sequence as its result.
-  /// </summary>
-  public abstract class SequenceFromSequenceResultOperatorBase : ResultOperatorBase
-  {
-    public abstract StreamedSequence ExecuteInMemory<T> (StreamedSequence input);
+	/// <summary>
+	/// Represents a <see cref="ResultOperatorBase"/> that is executed on a sequence, returning a new sequence as its result.
+	/// </summary>
+	public abstract class SequenceFromSequenceResultOperatorBase : ResultOperatorBase
+	{
+		public abstract StreamedSequence ExecuteInMemory<T>(StreamedSequence input);
 
-    public override IStreamedData ExecuteInMemory (IStreamedData input)
-    {
-      ArgumentUtility.CheckNotNull ("input", input);
-      return InvokeGenericExecuteMethod<StreamedSequence, StreamedSequence> (input, ExecuteInMemory<object>);
-    }
-  }
+		public override IStreamedData ExecuteInMemory(IStreamedData input)
+		{
+			return InvokeGenericExecuteMethod<StreamedSequence, StreamedSequence>(input, ExecuteInMemory<object>);
+		}
+	}
 }

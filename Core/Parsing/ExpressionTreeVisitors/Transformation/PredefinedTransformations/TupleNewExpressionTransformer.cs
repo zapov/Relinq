@@ -22,20 +22,20 @@ using System.Reflection;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.PredefinedTransformations
 {
-  /// <summary>
-  /// Detects <see cref="NewExpression"/> nodes for the .NET tuple types and adds <see cref="MemberInfo"/> metadata to those nodes.
-  /// This allows LINQ providers to match member access and constructor arguments more easily.
-  /// </summary>
-  public class TupleNewExpressionTransformer : MemberAddingNewExpressionTransformerBase
-  {
-    protected override bool CanAddMembers (Type instantiatedType, ReadOnlyCollection<Expression> arguments)
-    {
-      return instantiatedType.Namespace == "System" && instantiatedType.Name.StartsWith ("Tuple`");
-    }
+	/// <summary>
+	/// Detects <see cref="NewExpression"/> nodes for the .NET tuple types and adds <see cref="MemberInfo"/> metadata to those nodes.
+	/// This allows LINQ providers to match member access and constructor arguments more easily.
+	/// </summary>
+	public class TupleNewExpressionTransformer : MemberAddingNewExpressionTransformerBase
+	{
+		protected override bool CanAddMembers(Type instantiatedType, ReadOnlyCollection<Expression> arguments)
+		{
+			return instantiatedType.Namespace == "System" && instantiatedType.Name.StartsWith("Tuple`");
+		}
 
-    protected override MemberInfo[] GetMembers (ConstructorInfo constructorInfo, ReadOnlyCollection<Expression> arguments)
-    {
-      return arguments.Select ((expr, i) => GetMemberForNewExpression (constructorInfo.DeclaringType, "Item" + (i + 1))).ToArray ();
-    }
-  }
+		protected override MemberInfo[] GetMembers(ConstructorInfo constructorInfo, ReadOnlyCollection<Expression> arguments)
+		{
+			return arguments.Select((expr, i) => GetMemberForNewExpression(constructorInfo.DeclaringType, "Item" + (i + 1))).ToArray();
+		}
+	}
 }

@@ -14,39 +14,31 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Collections
 {
-  /// <summary>
-  /// Defines extension methods that simplify working with a dictionary that has a collection-values item-type.
-  /// </summary>
-  public static class MultiDictionaryExtensions
-  {
-    public static void Add<TKey, TValue> (this IDictionary<TKey, ICollection<TValue>> dictionary, TKey key, TValue item)
-    {
-      ArgumentUtility.CheckNotNull ("dictionary", dictionary);
-      ArgumentUtility.CheckNotNull ("key", key);
-      ArgumentUtility.CheckNotNull ("item", item);
+	/// <summary>
+	/// Defines extension methods that simplify working with a dictionary that has a collection-values item-type.
+	/// </summary>
+	public static class MultiDictionaryExtensions
+	{
+		public static void Add<TKey, TValue>(this IDictionary<TKey, ICollection<TValue>> dictionary, TKey key, TValue item)
+		{
+			ICollection<TValue> value;
+			if (!dictionary.TryGetValue(key, out value))
+			{
+				value = new List<TValue>();
+				dictionary.Add(key, value);
+			}
 
-      ICollection<TValue> value;
-      if (!dictionary.TryGetValue (key, out value))
-      {
-        value = new List<TValue>();
-        dictionary.Add (key, value);
-      }
+			value.Add(item);
+		}
 
-      value.Add (item);
-    }
-
-    public static int CountValues<TKey, TValue> (this IDictionary<TKey, ICollection<TValue>> dictionary)
-    {
-      ArgumentUtility.CheckNotNull ("dictionary", dictionary);
-      
-      return dictionary.Sum (kvp => kvp.Value.Count);
-    }
-  }
+		public static int CountValues<TKey, TValue>(this IDictionary<TKey, ICollection<TValue>> dictionary)
+		{
+			return dictionary.Sum(kvp => kvp.Value.Count);
+		}
+	}
 }

@@ -16,33 +16,30 @@
 // 
 using System;
 using System.Linq.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.IntermediateModel
 {
-  /// <summary>
-  /// Caches a resolved expression in the <see cref="IExpressionNode"/> classes.
-  /// </summary>
-  public class ResolvedExpressionCache<T>
-      where T : Expression
-  {
-    private readonly ExpressionResolver _resolver;
-    private T _cachedExpression;
+	/// <summary>
+	/// Caches a resolved expression in the <see cref="IExpressionNode"/> classes.
+	/// </summary>
+	public class ResolvedExpressionCache<T>
+		where T : Expression
+	{
+		private readonly ExpressionResolver _resolver;
+		private T _cachedExpression;
 
-    public ResolvedExpressionCache (IExpressionNode currentNode)
-    {
-      ArgumentUtility.CheckNotNull ("currentNode", currentNode);
+		public ResolvedExpressionCache(IExpressionNode currentNode)
+		{
+			_resolver = new ExpressionResolver(currentNode);
+			_cachedExpression = null;
+		}
 
-      _resolver = new ExpressionResolver (currentNode);
-      _cachedExpression = null;
-    }
+		public T GetOrCreate(Func<ExpressionResolver, T> generator)
+		{
+			if (_cachedExpression == null)
+				_cachedExpression = generator(_resolver);
 
-    public T GetOrCreate (Func<ExpressionResolver, T> generator)
-    {
-      if (_cachedExpression == null)
-        _cachedExpression = generator (_resolver);
-
-      return _cachedExpression;
-    }
-  }
+			return _cachedExpression;
+		}
+	}
 }

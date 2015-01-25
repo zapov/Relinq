@@ -14,27 +14,23 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Parsing.ExpressionTreeVisitors;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.ExpressionTreeProcessors
 {
-  /// <summary>
-  /// Analyzes an <see cref="Expression"/> tree for sub-trees that are evaluatable in-memory, and evaluates those sub-trees.
-  /// </summary>
-  /// <remarks>
-  /// The <see cref="PartialEvaluatingExpressionTreeProcessor"/> uses the <see cref="PartialEvaluatingExpressionTreeVisitor"/> for partial evaluation.
-  /// It performs two visiting runs over the <see cref="Expression"/> tree.
-  /// </remarks>
-  public sealed class PartialEvaluatingExpressionTreeProcessor : IExpressionTreeProcessor
-  {
-    public Expression Process (Expression expressionTree)
-    {
-      ArgumentUtility.CheckNotNull ("expressionTree", expressionTree);
-
-      return PartialEvaluatingExpressionTreeVisitor.EvaluateIndependentSubtrees (expressionTree);
-    }
-  }
+	/// <summary>
+	/// Analyzes an <see cref="Expression"/> tree for sub-trees that are evaluatable in-memory, and evaluates those sub-trees.
+	/// </summary>
+	/// <remarks>
+	/// The <see cref="PartialEvaluatingExpressionTreeProcessor"/> uses the <see cref="PartialEvaluatingExpressionTreeVisitor"/> for partial evaluation.
+	/// It performs two visiting runs over the <see cref="Expression"/> tree.
+	/// </remarks>
+	public sealed class PartialEvaluatingExpressionTreeProcessor : IExpressionTreeProcessor
+	{
+		public Expression Process(Expression expressionTree)
+		{
+			return PartialEvaluatingExpressionTreeVisitor.EvaluateIndependentSubtrees(expressionTree);
+		}
+	}
 }

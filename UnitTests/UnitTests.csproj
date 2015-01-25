@@ -31,7 +31,7 @@
     </UpgradeBackupLocation>
     <OldToolsVersion>3.5</OldToolsVersion>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\remotion.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\relinq.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -381,9 +381,6 @@
     <Compile Include="TestQueryGenerators\WhereTestQueryGenerator.cs" />
     <Compile Include="Transformations\SubQueryFromClauseFlattenerTest.cs" />
     <Compile Include="UniqueIdentifierGeneratorTest.cs" />
-    <None Include="..\remotion.snk">
-      <Link>remotion.snk</Link>
-    </None>
     <None Include="..\Apache-2.0.licenseheader">
       <Link>Apache-2.0.licenseheader</Link>
     </None>
@@ -420,9 +417,9 @@
     <Content Include="Parsing\ExpressionTrees\whereFromWhereQuery.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj">
+    <ProjectReference Include="..\Core\Remotion.Linq.csproj">
       <Project>{B500A9B5-0941-4DBF-8AAD-C6E1FD9C6729}</Project>
-      <Name>Core</Name>
+      <Name>Remotion.Linq</Name>
     </ProjectReference>
     <ProjectReference Include="..\Development\Development.csproj">
       <Project>{31a1ae30-079f-489e-9757-4efb4c457e43}</Project>

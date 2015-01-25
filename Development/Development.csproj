@@ -41,7 +41,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\remotion.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\relinq.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -96,15 +96,18 @@
     <Compile Include="UnitTesting\TestQueryModelVisitor.cs" />
     <Compile Include="UnitTesting\TestQueryProvider.cs" />
     <Compile Include="UnitTesting\Clauses\StreamedData\TestStreamedValueInfo.cs" />
-    <None Include="..\remotion.snk">
-      <Link>remotion.snk</Link>
-    </None>
     <None Include="..\Apache-2.0.licenseheader">
       <Link>Apache-2.0.licenseheader</Link>
     </None>
     <None Include="App_Packages\Remotion.Utilities.NullableTypeUtility.Sources.1.15.23.0\SharedSource Apache-2.0.licenseheader" />
     <None Include="Development.nuspec" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Remotion.Linq.csproj">
+      <Project>{B500A9B5-0941-4DBF-8AAD-C6E1FD9C6729}</Project>
+      <Name>Remotion.Linq</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -20,7 +20,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Build", "Build\Build.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Development.UnitTests", "Development.UnitTests\Development.UnitTests.csproj", "{4C63B552-1279-44BF-B8A3-69255B4FFC84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{B500A9B5-0941-4DBF-8AAD-C6E1FD9C6729}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remotion.Linq", "Core\Remotion.Linq.csproj", "{B500A9B5-0941-4DBF-8AAD-C6E1FD9C6729}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

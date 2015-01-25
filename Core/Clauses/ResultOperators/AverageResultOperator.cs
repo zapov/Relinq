@@ -18,74 +18,68 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents a calculation of an average value from the items returned by a query.
-  /// This is a result operator, operating on the whole result set of a query.
-  /// </summary>
-  /// <example>
-  /// In C#, the "Average" call in the following example corresponds to an <see cref="AverageResultOperator"/>.
-  /// <code>
-  /// var query = (from s in Students
-  ///              select s.ID).Average();
-  /// </code>
-  /// </example>
-  public class AverageResultOperator : ValueFromSequenceResultOperatorBase
-  {
-    public override ResultOperatorBase Clone (CloneContext cloneContext)
-    {
-      return new AverageResultOperator ();
-    }
+	/// <summary>
+	/// Represents a calculation of an average value from the items returned by a query.
+	/// This is a result operator, operating on the whole result set of a query.
+	/// </summary>
+	/// <example>
+	/// In C#, the "Average" call in the following example corresponds to an <see cref="AverageResultOperator"/>.
+	/// <code>
+	/// var query = (from s in Students
+	///              select s.ID).Average();
+	/// </code>
+	/// </example>
+	public class AverageResultOperator : ValueFromSequenceResultOperatorBase
+	{
+		public override ResultOperatorBase Clone(CloneContext cloneContext)
+		{
+			return new AverageResultOperator();
+		}
 
-    public override StreamedValue ExecuteInMemory<T> (StreamedSequence input)
-    {
-      ArgumentUtility.CheckNotNull ("input", input);
+		public override StreamedValue ExecuteInMemory<T>(StreamedSequence input)
+		{
+			var method = typeof(Enumerable).GetMethod("Average", new[] { typeof(IEnumerable<T>) });
+			if (method == null)
+			{
+				var message = string.Format("Cannot calculate the average of objects of type '{0}' in memory.", typeof(T).FullName);
+				throw new NotSupportedException(message);
+			}
 
-      var method = typeof (Enumerable).GetRuntimeMethod ("Average", new[] { typeof(IEnumerable<T>) });
-      if (method == null)
-      {
-        var message = string.Format ("Cannot calculate the average of objects of type '{0}' in memory.", typeof (T).FullName);
-        throw new NotSupportedException (message);
-      }
+			var result = method.Invoke(null, new[] { input.GetTypedSequence<T>() });
+			return new StreamedValue(result, (StreamedValueInfo)GetOutputDataInfo(input.DataInfo));
+		}
 
-      Assertion.DebugAssert (GetOutputDataInfo (input.DataInfo).DataType == method.ReturnType, "ReturnType of method matches return type of this operator");
+		public override IStreamedDataInfo GetOutputDataInfo(IStreamedDataInfo inputInfo)
+		{
+			var sequenceInfo = (StreamedSequenceInfo)inputInfo;
 
-      var result = method.Invoke (null, new[] { input.GetTypedSequence<T>() });
-      return new StreamedValue (result, (StreamedValueInfo) GetOutputDataInfo (input.DataInfo));
-    }
+			Type resultType = GetResultType(sequenceInfo.ResultItemType);
+			return new StreamedScalarValueInfo(resultType);
+		}
 
-    public override IStreamedDataInfo GetOutputDataInfo (IStreamedDataInfo inputInfo)
-    {
-      var sequenceInfo = ArgumentUtility.CheckNotNullAndType<StreamedSequenceInfo> ("inputInfo", inputInfo);
+		/// <inheritdoc />
+		public override void TransformExpressions(Func<Expression, Expression> transformation)
+		{
+			//nothing to do here
+		}
 
-      Type resultType = GetResultType (sequenceInfo.ResultItemType);
-      return new StreamedScalarValueInfo (resultType);
-    }
+		public override string ToString()
+		{
+			return "Average()";
+		}
 
-    /// <inheritdoc />
-    public override void TransformExpressions (Func<Expression, Expression> transformation)
-    {
-      //nothing to do here
-    }
-
-    public override string ToString ()
-    {
-      return "Average()";
-    }
-
-    private Type GetResultType (Type inputItemType)
-    {
-      if (inputItemType == typeof (int) || inputItemType == typeof (long))
-        return typeof (double);
-      else if (inputItemType == typeof (int?) || inputItemType == typeof (long?))
-        return typeof (double?);
-      else
-        return inputItemType;
-    }
-  }
+		private Type GetResultType(Type inputItemType)
+		{
+			if (inputItemType == typeof(int) || inputItemType == typeof(long))
+				return typeof(double);
+			else if (inputItemType == typeof(int?) || inputItemType == typeof(long?))
+				return typeof(double?);
+			else
+				return inputItemType;
+		}
+	}
 }

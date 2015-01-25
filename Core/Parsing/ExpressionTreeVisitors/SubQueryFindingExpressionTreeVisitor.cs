@@ -14,61 +14,54 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.Expressions;
 using Remotion.Linq.Parsing.Structure;
 using Remotion.Linq.Parsing.Structure.ExpressionTreeProcessors;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors
 {
-  /// <summary>
-  /// Preprocesses an expression tree for parsing. The preprocessing involves detection of sub-queries and VB-specific expressions.
-  /// </summary>
-  public class SubQueryFindingExpressionTreeVisitor : ExpressionTreeVisitor
-  {
-    public static Expression Process (Expression expressionTree, INodeTypeProvider nodeTypeProvider)
-    {
-      ArgumentUtility.CheckNotNull ("expressionTree", expressionTree);
-      ArgumentUtility.CheckNotNull ("nodeTypeProvider", nodeTypeProvider);
+	/// <summary>
+	/// Preprocesses an expression tree for parsing. The preprocessing involves detection of sub-queries and VB-specific expressions.
+	/// </summary>
+	public class SubQueryFindingExpressionTreeVisitor : ExpressionTreeVisitor
+	{
+		public static Expression Process(Expression expressionTree, INodeTypeProvider nodeTypeProvider)
+		{
+			var visitor = new SubQueryFindingExpressionTreeVisitor(nodeTypeProvider);
+			return visitor.VisitExpression(expressionTree);
+		}
 
-      var visitor = new SubQueryFindingExpressionTreeVisitor (nodeTypeProvider);
-      return visitor.VisitExpression (expressionTree);
-    }
+		private readonly INodeTypeProvider _nodeTypeProvider;
+		private readonly ExpressionTreeParser _expressionTreeParser;
+		private readonly QueryParser _queryParser;
 
-    private readonly INodeTypeProvider _nodeTypeProvider;
-    private readonly ExpressionTreeParser _expressionTreeParser;
-    private readonly QueryParser _queryParser;
+		private SubQueryFindingExpressionTreeVisitor(INodeTypeProvider nodeTypeProvider)
+		{
+			_nodeTypeProvider = nodeTypeProvider;
+			_expressionTreeParser = new ExpressionTreeParser(_nodeTypeProvider, new NullExpressionTreeProcessor());
+			_queryParser = new QueryParser(_expressionTreeParser);
+		}
 
-    private SubQueryFindingExpressionTreeVisitor (INodeTypeProvider nodeTypeProvider)
-    {
-      ArgumentUtility.CheckNotNull ("nodeTypeProvider", nodeTypeProvider);
+		public override Expression VisitExpression(Expression expression)
+		{
+			var potentialQueryOperatorExpression = _expressionTreeParser.GetQueryOperatorExpression(expression);
+			if (potentialQueryOperatorExpression != null && _nodeTypeProvider.IsRegistered(potentialQueryOperatorExpression.Method))
+				return CreateSubQueryNode(potentialQueryOperatorExpression);
+			else
+				return base.VisitExpression(expression);
+		}
 
-      _nodeTypeProvider = nodeTypeProvider;
-      _expressionTreeParser = new ExpressionTreeParser (_nodeTypeProvider, new NullExpressionTreeProcessor());
-      _queryParser = new QueryParser (_expressionTreeParser);
-    }
+		protected internal override Expression VisitUnknownNonExtensionExpression(Expression expression)
+		{
+			//ignore
+			return expression;
+		}
 
-    public override Expression VisitExpression (Expression expression)
-    {
-      var potentialQueryOperatorExpression = _expressionTreeParser.GetQueryOperatorExpression (expression);
-      if (potentialQueryOperatorExpression != null && _nodeTypeProvider.IsRegistered (potentialQueryOperatorExpression.Method))
-        return CreateSubQueryNode (potentialQueryOperatorExpression);
-      else
-        return base.VisitExpression (expression);
-    }
-    
-    protected internal override Expression VisitUnknownNonExtensionExpression (Expression expression)
-    {
-      //ignore
-      return expression;
-    }
-
-    private SubQueryExpression CreateSubQueryNode (MethodCallExpression methodCallExpression)
-    {
-      QueryModel queryModel = _queryParser.GetParsedQuery (methodCallExpression);
-      return new SubQueryExpression (queryModel);
-    }
-  }
+		private SubQueryExpression CreateSubQueryNode(MethodCallExpression methodCallExpression)
+		{
+			QueryModel queryModel = _queryParser.GetParsedQuery(methodCallExpression);
+			return new SubQueryExpression(queryModel);
+		}
+	}
 }

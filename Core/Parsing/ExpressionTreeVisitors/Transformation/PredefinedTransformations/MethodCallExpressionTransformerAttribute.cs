@@ -16,50 +16,45 @@
 // 
 using System;
 using System.Linq.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.PredefinedTransformations
 {
-  /// <summary>
-  /// Chooses a given <see cref="IExpressionTransformer{T}"/> for a specific method (or property get accessor).
-  /// </summary>
-  /// <remarks>
-  /// The <see cref="IExpressionTransformer{T}"/> must have a default constructor. To choose a transformer that does not have a default constructor,
-  /// create your own custom attribute class implementing 
-  /// <see cref="AttributeEvaluatingExpressionTransformer.IMethodCallExpressionTransformerAttribute"/>.
-  /// </remarks>
-  [AttributeUsage (AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-  public class MethodCallExpressionTransformerAttribute : Attribute, AttributeEvaluatingExpressionTransformer.IMethodCallExpressionTransformerAttribute
-  {
-    private readonly Type _transformerType;
+	/// <summary>
+	/// Chooses a given <see cref="IExpressionTransformer{T}"/> for a specific method (or property get accessor).
+	/// </summary>
+	/// <remarks>
+	/// The <see cref="IExpressionTransformer{T}"/> must have a default constructor. To choose a transformer that does not have a default constructor,
+	/// create your own custom attribute class implementing 
+	/// <see cref="AttributeEvaluatingExpressionTransformer.IMethodCallExpressionTransformerAttribute"/>.
+	/// </remarks>
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+	public class MethodCallExpressionTransformerAttribute : Attribute, AttributeEvaluatingExpressionTransformer.IMethodCallExpressionTransformerAttribute
+	{
+		private readonly Type _transformerType;
 
-    public MethodCallExpressionTransformerAttribute (Type transformerType)
-    {
-      ArgumentUtility.CheckNotNull ("transformerType", transformerType);
-      ArgumentUtility.CheckTypeIsAssignableFrom ("transformerType", transformerType, typeof (IExpressionTransformer<MethodCallExpression>));
+		public MethodCallExpressionTransformerAttribute(Type transformerType)
+		{
+			_transformerType = transformerType;
+		}
 
-      _transformerType = transformerType;
-    }
+		public Type TransformerType
+		{
+			get { return _transformerType; }
+		}
 
-    public Type TransformerType
-    {
-      get { return _transformerType; }
-    }
-
-    public IExpressionTransformer<MethodCallExpression> GetExpressionTransformer (MethodCallExpression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
-      try
-      {
-        return (IExpressionTransformer<MethodCallExpression>) Activator.CreateInstance (_transformerType);
-      }
-      catch (MissingMemberException ex)
-      {
-        var message = String.Format (
-            "The method call transformer '{0}' has no public default constructor and therefore cannot be used with the MethodCallExpressionTransformerAttribute.",
-            _transformerType);
-        throw new InvalidOperationException (message, ex);
-      }
-    }
-  }
+		public IExpressionTransformer<MethodCallExpression> GetExpressionTransformer(MethodCallExpression expression)
+		{
+			try
+			{
+				return (IExpressionTransformer<MethodCallExpression>)Activator.CreateInstance(_transformerType);
+			}
+			catch (MissingMemberException ex)
+			{
+				var message = String.Format(
+					"The method call transformer '{0}' has no public default constructor and therefore cannot be used with the MethodCallExpressionTransformerAttribute.",
+					_transformerType);
+				throw new InvalidOperationException(message, ex);
+			}
+		}
+	}
 }

@@ -19,82 +19,78 @@ using System.Linq;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.ExpressionTreeVisitors;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents taking only a specific number of items returned by a query. 
-  /// This is a result operator, operating on the whole result set of a query.
-  /// </summary>
-  /// <example>
-  /// In C#, the "Take" call in the following example corresponds to a <see cref="TakeResultOperator"/>.
-  /// <code>
-  /// var query = (from s in Students
-  ///              select s).Take(3);
-  /// </code>
-  /// </example>
-  public class TakeResultOperator : SequenceTypePreservingResultOperatorBase
-  {
-    private Expression _count;
-    
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TakeResultOperator"/>.
-    /// </summary>
-    /// <param name="count">The number of elements which should be returned.</param>
-    public TakeResultOperator (Expression count)
-    {
-      ArgumentUtility.CheckNotNull ("count", count);
-      Count = count;
-    }
+	/// <summary>
+	/// Represents taking only a specific number of items returned by a query. 
+	/// This is a result operator, operating on the whole result set of a query.
+	/// </summary>
+	/// <example>
+	/// In C#, the "Take" call in the following example corresponds to a <see cref="TakeResultOperator"/>.
+	/// <code>
+	/// var query = (from s in Students
+	///              select s).Take(3);
+	/// </code>
+	/// </example>
+	public class TakeResultOperator : SequenceTypePreservingResultOperatorBase
+	{
+		private Expression _count;
 
-    public Expression Count
-    {
-      get { return _count; }
-      set 
-      {
-        ArgumentUtility.CheckNotNull ("value", value);
-        if (value.Type != typeof (int))
-        {
-          var message = string.Format ("The value expression returns '{0}', an expression returning 'System.Int32' was expected.", value.Type);
-          throw new ArgumentException (message, "value");
-        }
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TakeResultOperator"/>.
+		/// </summary>
+		/// <param name="count">The number of elements which should be returned.</param>
+		public TakeResultOperator(Expression count)
+		{
+			Count = count;
+		}
 
-        _count = value; 
-      }
-    }
+		public Expression Count
+		{
+			get { return _count; }
+			set
+			{
+				if (value.Type != typeof(int))
+				{
+					var message = string.Format("The value expression returns '{0}', an expression returning 'System.Int32' was expected.", value.Type);
+					throw new ArgumentException(message, "value");
+				}
 
-    /// <summary>
-    /// Gets the constant <see cref="int"/> value of the <see cref="Count"/> property, assuming it is a <see cref="ConstantExpression"/>. If it is
-    /// not, an expression is thrown.
-    /// </summary>
-    /// <returns>The constant <see cref="int"/> value of the <see cref="Count"/> property.</returns>
-    public int GetConstantCount ()
-    {
-      return GetConstantValueFromExpression<int> ("count", Count);
-    }
+				_count = value;
+			}
+		}
 
-    public override ResultOperatorBase Clone (CloneContext cloneContext)
-    {
-      return new TakeResultOperator (Count);
-    }
+		/// <summary>
+		/// Gets the constant <see cref="int"/> value of the <see cref="Count"/> property, assuming it is a <see cref="ConstantExpression"/>. If it is
+		/// not, an expression is thrown.
+		/// </summary>
+		/// <returns>The constant <see cref="int"/> value of the <see cref="Count"/> property.</returns>
+		public int GetConstantCount()
+		{
+			return GetConstantValueFromExpression<int>("count", Count);
+		}
 
-    public override StreamedSequence ExecuteInMemory<T> (StreamedSequence input)
-    {
-      var sequence = input.GetTypedSequence<T> ();
-      var result = sequence.Take (GetConstantCount ());
-      return new StreamedSequence (result.AsQueryable (), (StreamedSequenceInfo) GetOutputDataInfo (input.DataInfo));
-    }
+		public override ResultOperatorBase Clone(CloneContext cloneContext)
+		{
+			return new TakeResultOperator(Count);
+		}
 
-    public override void TransformExpressions (Func<Expression, Expression> transformation)
-    {
-      ArgumentUtility.CheckNotNull ("transformation", transformation);
-      Count = transformation (Count);
-    }
+		public override StreamedSequence ExecuteInMemory<T>(StreamedSequence input)
+		{
+			var sequence = input.GetTypedSequence<T>();
+			var result = sequence.Take(GetConstantCount());
+			return new StreamedSequence(result.AsQueryable(), (StreamedSequenceInfo)GetOutputDataInfo(input.DataInfo));
+		}
 
-    public override string ToString ()
-    {
-      return "Take(" + FormattingExpressionTreeVisitor.Format (Count) + ")";
-    }
-  }
+		public override void TransformExpressions(Func<Expression, Expression> transformation)
+		{
+			Count = transformation(Count);
+		}
+
+		public override string ToString()
+		{
+			return "Take(" + FormattingExpressionTreeVisitor.Format(Count) + ")";
+		}
+	}
 }

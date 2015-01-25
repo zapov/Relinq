@@ -20,134 +20,106 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Utilities
 {
-  public static class ReflectionUtility
-  {
-    public static MethodInfo GetMethod<T> (Expression<Func<T>> wrappedCall)
-    {
-      ArgumentUtility.CheckNotNull ("wrappedCall", wrappedCall);
+	public static class ReflectionUtility
+	{
+		public static MethodInfo GetMethod<T>(Expression<Func<T>> wrappedCall)
+		{
+			switch (wrappedCall.Body.NodeType)
+			{
+				case ExpressionType.Call:
+					return ((MethodCallExpression)wrappedCall.Body).Method;
+				case ExpressionType.MemberAccess:
+					var memberExpression = (MemberExpression)wrappedCall.Body;
+					var property = memberExpression.Member as PropertyInfo;
+					var method = property != null ? property.GetGetMethod() : null;
+					if (method != null)
+						return method;
+					break;
+			}
 
-      switch (wrappedCall.Body.NodeType)
-      {
-        case ExpressionType.Call:
-          return ((MethodCallExpression) wrappedCall.Body).Method;
-        case ExpressionType.MemberAccess:
-          var memberExpression = (MemberExpression) wrappedCall.Body;
-          var property = memberExpression.Member as PropertyInfo;
-          var method = property != null ? property.GetMethod : null;
-          if (method != null)
-            return method;
-          break;
-      }
+			throw new ArgumentException(string.Format("Cannot extract a method from the given expression '{0}'.", wrappedCall.Body), "wrappedCall");
+		}
 
-      throw new ArgumentException (string.Format ("Cannot extract a method from the given expression '{0}'.", wrappedCall.Body), "wrappedCall");
-    }
+		public static MethodInfo GetRuntimeMethodChecked(this Type type, string methodName, Type[] parameterTypes)
+		{
+			return type.GetMethod(methodName, parameterTypes);
+		}
 
-    public static MethodInfo GetRuntimeMethodChecked (this Type type, string methodName, Type[] parameterTypes)
-    {
-      ArgumentUtility.CheckNotNull ("type", type);
-      ArgumentUtility.CheckNotNullOrEmpty ("methodName", methodName);
-      ArgumentUtility.CheckNotNull ("parameterTypes", parameterTypes);
+		public static Type GetMemberReturnType(MemberInfo member)
+		{
+			var propertyInfo = member as PropertyInfo;
+			if (propertyInfo != null)
+				return propertyInfo.PropertyType;
 
-      var methodInfo = type.GetRuntimeMethod (methodName, parameterTypes);
-      Assertion.IsNotNull (
-          methodInfo,
-          "Method '{0} ({1})' was not found on type '{2}'",
-          methodName,
-          string.Join (", ", parameterTypes.Select (t => t.Name)),
-          type.FullName);
+			var fieldInfo = member as FieldInfo;
+			if (fieldInfo != null)
+				return fieldInfo.FieldType;
 
-      return methodInfo;
-    }
+			var methodInfo = member as MethodInfo;
+			if (methodInfo != null)
+				return methodInfo.ReturnType;
 
-    public static Type GetMemberReturnType (MemberInfo member)
-    {
-      ArgumentUtility.CheckNotNull ("member", member);
+			throw new ArgumentException("Argument must be FieldInfo, PropertyInfo, or MethodInfo.", "member");
+		}
 
-      var propertyInfo = member as PropertyInfo;
-      if (propertyInfo != null)
-        return propertyInfo.PropertyType;
+		public static void CheckTypeIsClosedGenericIEnumerable(Type enumerableType, string argumentName)
+		{
+			Type itemType = TryGetItemTypeOfClosedGenericIEnumerable(enumerableType);
+			if (itemType == null)
+			{
+				var message = string.Format("Expected a closed generic type implementing IEnumerable<T>, but found '{0}'.", enumerableType);
+				throw new ArgumentException(message, argumentName);
+			}
+		}
 
-      var fieldInfo = member as FieldInfo;
-      if (fieldInfo != null)
-        return fieldInfo.FieldType;
+		public static Type GetItemTypeOfClosedGenericIEnumerable(Type enumerableType, string argumentName)
+		{
+			Type itemType = TryGetItemTypeOfClosedGenericIEnumerable(enumerableType);
+			if (itemType == null)
+			{
+				var message = string.Format("Expected a closed generic type implementing IEnumerable<T>, but found '{0}'.", enumerableType);
+				throw new ArgumentException(message, argumentName);
+			}
 
-      var methodInfo = member as MethodInfo;
-      if (methodInfo != null)
-        return methodInfo.ReturnType;
+			return itemType;
+		}
 
-      throw new ArgumentException ("Argument must be FieldInfo, PropertyInfo, or MethodInfo.", "member");
-    }
+		public static Type TryGetItemTypeOfClosedGenericIEnumerable(Type possibleEnumerableTypeInfo)
+		{
+			if (possibleEnumerableTypeInfo.IsArray)
+				return possibleEnumerableTypeInfo.GetElementType();
 
-    public static void CheckTypeIsClosedGenericIEnumerable (Type enumerableType, string argumentName)
-    {
-      ArgumentUtility.CheckNotNull ("enumerableType", enumerableType);
-      ArgumentUtility.CheckNotNullOrEmpty ("argumentName", argumentName);
+			if (!IsIEnumerable(possibleEnumerableTypeInfo))
+				return null;
 
-      Type itemType = TryGetItemTypeOfClosedGenericIEnumerable (enumerableType);
-      if (itemType == null)
-      {
-        var message = string.Format ("Expected a closed generic type implementing IEnumerable<T>, but found '{0}'.", enumerableType);
-        throw new ArgumentException (message, argumentName);
-      }
-    }
+			if (possibleEnumerableTypeInfo.IsGenericTypeDefinition)
+				return null;
 
-    public static Type GetItemTypeOfClosedGenericIEnumerable (Type enumerableType, string argumentName)
-    {
-      ArgumentUtility.CheckNotNull ("enumerableType", enumerableType);
-      ArgumentUtility.CheckNotNullOrEmpty ("argumentName", argumentName);
+			if (possibleEnumerableTypeInfo.IsGenericType && possibleEnumerableTypeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+				return possibleEnumerableTypeInfo.GetGenericArguments()[0];
 
-      Type itemType = TryGetItemTypeOfClosedGenericIEnumerable (enumerableType);
-      if (itemType == null)
-      {
-        var message = string.Format ("Expected a closed generic type implementing IEnumerable<T>, but found '{0}'.", enumerableType);
-        throw new ArgumentException (message, argumentName);
-      }
+			var implementedEnumerableInterface =
+				possibleEnumerableTypeInfo.GetInterfaces().FirstOrDefault(IsGenericIEnumerable);
 
-      return itemType;
-    }
+			if (implementedEnumerableInterface == null)
+				return null;
 
-    public static Type TryGetItemTypeOfClosedGenericIEnumerable (Type possibleEnumerableType)
-    {
-      ArgumentUtility.CheckNotNull ("possibleEnumerableType", possibleEnumerableType);
+			return implementedEnumerableInterface.GetGenericArguments()[0];
+		}
 
-      var possibleEnumerableTypeInfo = possibleEnumerableType.GetTypeInfo();
+		private static bool IsIEnumerable(Type type)
+		{
+			return typeof(IEnumerable).IsAssignableFrom(type);
+		}
 
-      if (possibleEnumerableTypeInfo.IsArray)
-        return possibleEnumerableTypeInfo.GetElementType();
-
-      if (!IsIEnumerable (possibleEnumerableTypeInfo))
-        return null;
-
-      if (possibleEnumerableTypeInfo.IsGenericTypeDefinition)
-        return null;
-
-      if (possibleEnumerableTypeInfo.IsGenericType && possibleEnumerableType.GetGenericTypeDefinition() == typeof (IEnumerable<>))
-        return possibleEnumerableTypeInfo.GenericTypeArguments[0];
-
-      var implementedEnumerableInterface =
-          possibleEnumerableTypeInfo.ImplementedInterfaces.Select (t => t.GetTypeInfo()).FirstOrDefault (IsGenericIEnumerable);
-
-      if (implementedEnumerableInterface == null)
-        return null;
-
-      Assertion.DebugAssert (implementedEnumerableInterface.IsGenericType);
-      return implementedEnumerableInterface.GenericTypeArguments[0];
-    }
-
-    private static bool IsIEnumerable (TypeInfo type)
-    {
-      return typeof (IEnumerable).GetTypeInfo().IsAssignableFrom (type);
-    }
-
-    private static bool IsGenericIEnumerable (TypeInfo enumerableType)
-    {
-      return IsIEnumerable (enumerableType)
-             && enumerableType.IsGenericType
-             && enumerableType.GetGenericTypeDefinition() == typeof (IEnumerable<>);
-    }
-  }
+		private static bool IsGenericIEnumerable(Type enumerableType)
+		{
+			return IsIEnumerable(enumerableType)
+				   && enumerableType.IsGenericType
+				   && enumerableType.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+		}
+	}
 }

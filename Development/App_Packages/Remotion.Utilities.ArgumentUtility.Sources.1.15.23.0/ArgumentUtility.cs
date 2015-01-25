@@ -205,7 +205,7 @@ namespace Remotion.Utilities
         throw new ArgumentNullException (argumentName);
 
       // ReSharper disable UseMethodIsInstanceOfType
-      if (!expectedType.GetTypeInfo().IsAssignableFrom (actualValue.GetType().GetTypeInfo()))
+      if (!expectedType.IsAssignableFrom (actualValue.GetType()))
         throw CreateArgumentTypeException (argumentName, actualValue.GetType(), expectedType);
       // ReSharper restore UseMethodIsInstanceOfType
 
@@ -265,7 +265,7 @@ namespace Remotion.Utilities
       }
 
       // ReSharper disable UseMethodIsInstanceOfType
-      if (!expectedType.GetTypeInfo().IsAssignableFrom (actualValue.GetType().GetTypeInfo()))
+      if (!expectedType.IsAssignableFrom (actualValue.GetType()))
         throw CreateArgumentTypeException (argumentName, actualValue.GetType(), expectedType);
       // ReSharper restore UseMethodIsInstanceOfType
 
@@ -326,7 +326,7 @@ namespace Remotion.Utilities
       CheckNotNull ("expectedType", expectedType);
       if (actualType != null)
       {
-        if (!expectedType.GetTypeInfo().IsAssignableFrom (actualType.GetTypeInfo()))
+        if (!expectedType.IsAssignableFrom (actualType))
         {
           string message = string.Format (
               "Parameter '{0}' is a '{2}', which cannot be assigned to type '{1}'.",
@@ -365,7 +365,7 @@ namespace Remotion.Utilities
         foreach (object item in collection)
         {
           // ReSharper disable UseMethodIsInstanceOfType
-          if (item != null && !itemType.GetTypeInfo().IsAssignableFrom (item.GetType().GetTypeInfo()))
+          if (item != null && !itemType.IsAssignableFrom (item.GetType()))
             throw CreateArgumentItemTypeException (argumentName, index, itemType, item.GetType());
           // ReSharper restore UseMethodIsInstanceOfType
 
@@ -392,7 +392,7 @@ namespace Remotion.Utilities
           if (item == null)
             throw CreateArgumentItemNullException (argumentName, index);
           // ReSharper disable UseMethodIsInstanceOfType
-          if (!itemType.GetTypeInfo().IsAssignableFrom (item.GetType().GetTypeInfo()))
+          if (!itemType.IsAssignableFrom (item.GetType()))
             throw CreateArgumentItemTypeException (argumentName, index, itemType, item.GetType());
           // ReSharper restore UseMethodIsInstanceOfType
 

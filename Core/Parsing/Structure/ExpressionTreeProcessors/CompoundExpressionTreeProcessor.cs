@@ -14,38 +14,34 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.ExpressionTreeProcessors
 {
-  /// <summary>
-  /// Implements <see cref="IExpressionTreeProcessor"/> by storing a list of inner <see cref="IExpressionTreeProcessor"/> instances.
-  /// The <see cref="Process"/> method calls each inner instance in the order defined by the <see cref="InnerProcessors"/> property. This is an
-  /// implementation of the Composite Pattern.
-  /// </summary>
-  public sealed class CompoundExpressionTreeProcessor : IExpressionTreeProcessor
-  {
-    private readonly List<IExpressionTreeProcessor> _innerProcessors;
+	/// <summary>
+	/// Implements <see cref="IExpressionTreeProcessor"/> by storing a list of inner <see cref="IExpressionTreeProcessor"/> instances.
+	/// The <see cref="Process"/> method calls each inner instance in the order defined by the <see cref="InnerProcessors"/> property. This is an
+	/// implementation of the Composite Pattern.
+	/// </summary>
+	public sealed class CompoundExpressionTreeProcessor : IExpressionTreeProcessor
+	{
+		private readonly List<IExpressionTreeProcessor> _innerProcessors;
 
-    public CompoundExpressionTreeProcessor (IEnumerable<IExpressionTreeProcessor> innerProcessors)
-    {
-      ArgumentUtility.CheckNotNull ("innerProcessors", innerProcessors);
-      _innerProcessors = new List<IExpressionTreeProcessor> (innerProcessors);
-    }
+		public CompoundExpressionTreeProcessor(IEnumerable<IExpressionTreeProcessor> innerProcessors)
+		{
+			_innerProcessors = new List<IExpressionTreeProcessor>(innerProcessors);
+		}
 
-    public IList<IExpressionTreeProcessor> InnerProcessors
-    {
-      get { return _innerProcessors; }
-    }
-    
-    public Expression Process (Expression expressionTree)
-    {
-      ArgumentUtility.CheckNotNull ("expressionTree", expressionTree);
-      return _innerProcessors.Aggregate (expressionTree, (expr, processor) => processor.Process (expr));
-    }
-  }
+		public IList<IExpressionTreeProcessor> InnerProcessors
+		{
+			get { return _innerProcessors; }
+		}
+
+		public Expression Process(Expression expressionTree)
+		{
+			return _innerProcessors.Aggregate(expressionTree, (expr, processor) => processor.Process(expr));
+		}
+	}
 }

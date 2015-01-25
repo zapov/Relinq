@@ -18,83 +18,74 @@ using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.Expressions;
 using Remotion.Linq.Parsing;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ExpressionTreeVisitors
 {
-  /// <summary>
-  /// Takes an expression and replaces all <see cref="QuerySourceReferenceExpression"/> instances, as defined by a given <see cref="QuerySourceMapping"/>.
-  /// This is used whenever references to query sources should be replaced by a transformation.
-  /// </summary>
-  public class ReferenceReplacingExpressionTreeVisitor : ExpressionTreeVisitor
-  {
-    /// <summary>
-    /// Takes an expression and replaces all <see cref="QuerySourceReferenceExpression"/> instances, as defined by a given 
-    /// <paramref name="querySourceMapping"/>.
-    /// </summary>
-    /// <param name="expression">The expression to be scanned for references.</param>
-    /// <param name="querySourceMapping">The clause mapping to be used for replacing <see cref="QuerySourceReferenceExpression"/> instances.</param>
-    /// <param name="throwOnUnmappedReferences">If <see langword="true"/>, the visitor will throw an exception when 
-    /// <see cref="QuerySourceReferenceExpression"/> not mapped in the <paramref name="querySourceMapping"/> is encountered. If <see langword="false"/>,
-    /// the visitor will ignore such expressions.</param>
-    /// <returns>An expression with its <see cref="QuerySourceReferenceExpression"/> instances replaced as defined by the 
-    /// <paramref name="querySourceMapping"/>.</returns>
-    public static Expression ReplaceClauseReferences (Expression expression, QuerySourceMapping querySourceMapping, bool throwOnUnmappedReferences)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
-      ArgumentUtility.CheckNotNull ("querySourceMapping", querySourceMapping);
+	/// <summary>
+	/// Takes an expression and replaces all <see cref="QuerySourceReferenceExpression"/> instances, as defined by a given <see cref="QuerySourceMapping"/>.
+	/// This is used whenever references to query sources should be replaced by a transformation.
+	/// </summary>
+	public class ReferenceReplacingExpressionTreeVisitor : ExpressionTreeVisitor
+	{
+		/// <summary>
+		/// Takes an expression and replaces all <see cref="QuerySourceReferenceExpression"/> instances, as defined by a given 
+		/// <paramref name="querySourceMapping"/>.
+		/// </summary>
+		/// <param name="expression">The expression to be scanned for references.</param>
+		/// <param name="querySourceMapping">The clause mapping to be used for replacing <see cref="QuerySourceReferenceExpression"/> instances.</param>
+		/// <param name="throwOnUnmappedReferences">If <see langword="true"/>, the visitor will throw an exception when 
+		/// <see cref="QuerySourceReferenceExpression"/> not mapped in the <paramref name="querySourceMapping"/> is encountered. If <see langword="false"/>,
+		/// the visitor will ignore such expressions.</param>
+		/// <returns>An expression with its <see cref="QuerySourceReferenceExpression"/> instances replaced as defined by the 
+		/// <paramref name="querySourceMapping"/>.</returns>
+		public static Expression ReplaceClauseReferences(Expression expression, QuerySourceMapping querySourceMapping, bool throwOnUnmappedReferences)
+		{
+			return new ReferenceReplacingExpressionTreeVisitor(querySourceMapping, throwOnUnmappedReferences).VisitExpression(expression);
+		}
 
-      return new ReferenceReplacingExpressionTreeVisitor (querySourceMapping, throwOnUnmappedReferences).VisitExpression (expression);
-    }
+		private readonly QuerySourceMapping _querySourceMapping;
+		private readonly bool _throwOnUnmappedReferences;
 
-    private readonly QuerySourceMapping _querySourceMapping;
-    private readonly bool _throwOnUnmappedReferences;
+		protected ReferenceReplacingExpressionTreeVisitor(QuerySourceMapping querySourceMapping, bool throwOnUnmappedReferences)
+		{
+			_querySourceMapping = querySourceMapping;
+			_throwOnUnmappedReferences = throwOnUnmappedReferences;
+		}
 
-    protected ReferenceReplacingExpressionTreeVisitor (QuerySourceMapping querySourceMapping, bool throwOnUnmappedReferences)
-    {
-      ArgumentUtility.CheckNotNull ("querySourceMapping", querySourceMapping);
-      _querySourceMapping = querySourceMapping;
-      _throwOnUnmappedReferences = throwOnUnmappedReferences;
-    }
+		protected QuerySourceMapping QuerySourceMapping
+		{
+			get { return _querySourceMapping; }
+		}
 
-    protected QuerySourceMapping QuerySourceMapping
-    {
-      get { return _querySourceMapping; }
-    }
+		protected override Expression VisitQuerySourceReferenceExpression(QuerySourceReferenceExpression expression)
+		{
+			if (QuerySourceMapping.ContainsMapping(expression.ReferencedQuerySource))
+			{
+				return QuerySourceMapping.GetExpression(expression.ReferencedQuerySource);
+			}
+			else if (_throwOnUnmappedReferences)
+			{
+				var message = "Cannot replace reference to clause '" + expression.ReferencedQuerySource.ItemName + "', there is no mapped expression.";
+				throw new InvalidOperationException(message);
+			}
+			else
+			{
+				return expression;
+			}
+		}
 
-    protected override Expression VisitQuerySourceReferenceExpression (QuerySourceReferenceExpression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
+		protected override Expression VisitSubQueryExpression(SubQueryExpression expression)
+		{
+			expression.QueryModel.TransformExpressions(ex => ReplaceClauseReferences(ex, _querySourceMapping, _throwOnUnmappedReferences));
+			return expression;
+		}
 
-      if (QuerySourceMapping.ContainsMapping (expression.ReferencedQuerySource))
-      {
-        return QuerySourceMapping.GetExpression (expression.ReferencedQuerySource);
-      }
-      else if (_throwOnUnmappedReferences)
-      {
-        var message = "Cannot replace reference to clause '" + expression.ReferencedQuerySource.ItemName + "', there is no mapped expression.";
-        throw new InvalidOperationException (message);
-      }
-      else
-      {
-        return expression;
-      }
-    }
+		protected internal override Expression VisitUnknownNonExtensionExpression(Expression expression)
+		{
+			//ignore
+			return expression;
+		}
 
-    protected override Expression VisitSubQueryExpression (SubQueryExpression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
-
-      expression.QueryModel.TransformExpressions (ex => ReplaceClauseReferences (ex, _querySourceMapping, _throwOnUnmappedReferences));
-      return expression;
-    }
-
-    protected internal override Expression VisitUnknownNonExtensionExpression (Expression expression)
-    {
-      //ignore
-      return expression;
-    }
-
-  }
+	}
 
 }

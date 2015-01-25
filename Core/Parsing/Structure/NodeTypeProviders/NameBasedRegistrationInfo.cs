@@ -16,35 +16,31 @@
 // 
 using System;
 using System.Reflection;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.NodeTypeProviders
 {
-  /// <summary>
-  /// Defines a name and a filter predicate used when determining the matching expression node type by <see cref="MethodNameBasedNodeTypeRegistry"/>.
-  /// </summary>
-  public sealed class NameBasedRegistrationInfo
-  {
-    private readonly string _name;
-    private readonly Func<MethodInfo, bool> _filter;
+	/// <summary>
+	/// Defines a name and a filter predicate used when determining the matching expression node type by <see cref="MethodNameBasedNodeTypeRegistry"/>.
+	/// </summary>
+	public sealed class NameBasedRegistrationInfo
+	{
+		private readonly string _name;
+		private readonly Func<MethodInfo, bool> _filter;
 
-    public NameBasedRegistrationInfo (string name, Func<MethodInfo, bool> filter) 
-    {
-      ArgumentUtility.CheckNotNullOrEmpty ("name", name);
-      ArgumentUtility.CheckNotNull ("filter", filter);
+		public NameBasedRegistrationInfo(string name, Func<MethodInfo, bool> filter)
+		{
+			_name = name;
+			_filter = filter;
+		}
 
-      _name = name;
-      _filter = filter;
-    }
+		public string Name
+		{
+			get { return _name; }
+		}
 
-    public string Name
-    {
-      get { return _name; }
-    }
-
-    public Func<MethodInfo, bool> Filter
-    {
-      get { return _filter; }
-    }
-  }
+		public Func<MethodInfo, bool> Filter
+		{
+			get { return _filter; }
+		}
+	}
 }

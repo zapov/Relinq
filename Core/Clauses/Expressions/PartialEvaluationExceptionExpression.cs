@@ -19,99 +19,92 @@ using System.Linq.Expressions;
 using Remotion.Linq.Clauses.ExpressionTreeVisitors;
 using Remotion.Linq.Parsing;
 using Remotion.Linq.Parsing.ExpressionTreeVisitors;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.Expressions
 {
-  /// <summary>
-  /// Wraps an exception whose partial evaluation caused an exception.
-  /// </summary>
-  /// <remarks>
-  /// <para>
-  /// When <see cref="PartialEvaluatingExpressionTreeVisitor"/> encounters an exception while evaluating an independent expression subtree, it
-  /// will wrap the subtree within a <see cref="PartialEvaluationExceptionExpression"/>. The wrapper contains both the <see cref="Exception"/> 
-  /// instance and the <see cref="EvaluatedExpression"/> that caused the exception.
-  /// </para>
-  /// <para>
-  /// To explicitly support this expression type, implement  <see cref="IPartialEvaluationExceptionExpressionVisitor"/>.
-  /// To ignore this wrapper and only handle the inner <see cref="EvaluatedExpression"/>, call the <see cref="Reduce"/> method and visit the result.
-  /// </para>
-  /// <para>
-  /// Subclasses of <see cref="ThrowingExpressionTreeVisitor"/> that do not implement <see cref="IPartialEvaluationExceptionExpressionVisitor"/> will, 
-  /// by default, automatically reduce this expression type to the <see cref="EvaluatedExpression"/> in the 
-  /// <see cref="ThrowingExpressionTreeVisitor.VisitExtensionExpression"/> method.
-  /// </para>
-  /// <para>
-  /// Subclasses of <see cref="ExpressionTreeVisitor"/> that do not implement <see cref="IPartialEvaluationExceptionExpressionVisitor"/> will, 
-  /// by default, ignore this expression and visit its child expressions via the <see cref="ExpressionTreeVisitor.VisitExtensionExpression"/> and 
-  /// <see cref="VisitChildren"/> methods.
-  /// </para>
-  /// </remarks>
-  public class PartialEvaluationExceptionExpression : ExtensionExpression
-  {
-    public const ExpressionType ExpressionType = (ExpressionType) 100004;
+	/// <summary>
+	/// Wraps an exception whose partial evaluation caused an exception.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// When <see cref="PartialEvaluatingExpressionTreeVisitor"/> encounters an exception while evaluating an independent expression subtree, it
+	/// will wrap the subtree within a <see cref="PartialEvaluationExceptionExpression"/>. The wrapper contains both the <see cref="Exception"/> 
+	/// instance and the <see cref="EvaluatedExpression"/> that caused the exception.
+	/// </para>
+	/// <para>
+	/// To explicitly support this expression type, implement  <see cref="IPartialEvaluationExceptionExpressionVisitor"/>.
+	/// To ignore this wrapper and only handle the inner <see cref="EvaluatedExpression"/>, call the <see cref="Reduce"/> method and visit the result.
+	/// </para>
+	/// <para>
+	/// Subclasses of <see cref="ThrowingExpressionTreeVisitor"/> that do not implement <see cref="IPartialEvaluationExceptionExpressionVisitor"/> will, 
+	/// by default, automatically reduce this expression type to the <see cref="EvaluatedExpression"/> in the 
+	/// <see cref="ThrowingExpressionTreeVisitor.VisitExtensionExpression"/> method.
+	/// </para>
+	/// <para>
+	/// Subclasses of <see cref="ExpressionTreeVisitor"/> that do not implement <see cref="IPartialEvaluationExceptionExpressionVisitor"/> will, 
+	/// by default, ignore this expression and visit its child expressions via the <see cref="ExpressionTreeVisitor.VisitExtensionExpression"/> and 
+	/// <see cref="VisitChildren"/> methods.
+	/// </para>
+	/// </remarks>
+	public class PartialEvaluationExceptionExpression : ExtensionExpression
+	{
+		public const ExpressionType ExpressionType = (ExpressionType)100004;
 
-    private readonly Exception _exception;
-    private readonly Expression _evaluatedExpression;
+		private readonly Exception _exception;
+		private readonly Expression _evaluatedExpression;
 
-    public PartialEvaluationExceptionExpression (Exception exception, Expression evaluatedExpression)
-      : base (ArgumentUtility.CheckNotNull ("evaluatedExpression", evaluatedExpression).Type, ExpressionType)
-    {
-      ArgumentUtility.CheckNotNull ("exception", exception);
-      
-      _exception = exception;
-      _evaluatedExpression = evaluatedExpression;
-    }
+		public PartialEvaluationExceptionExpression(Exception exception, Expression evaluatedExpression)
+			: base(evaluatedExpression.Type, ExpressionType)
+		{
+			_exception = exception;
+			_evaluatedExpression = evaluatedExpression;
+		}
 
-    public Exception Exception
-    {
-      get { return _exception; }
-    }
+		public Exception Exception
+		{
+			get { return _exception; }
+		}
 
-    public Expression EvaluatedExpression
-    {
-      get { return _evaluatedExpression; }
-    }
+		public Expression EvaluatedExpression
+		{
+			get { return _evaluatedExpression; }
+		}
 
-    public override bool CanReduce
-    {
-      get { return true; }
-    }
+		public override bool CanReduce
+		{
+			get { return true; }
+		}
 
-    public override Expression Reduce ()
-    {
-      return _evaluatedExpression;
-    }
+		public override Expression Reduce()
+		{
+			return _evaluatedExpression;
+		}
 
-    protected internal override Expression VisitChildren (ExpressionTreeVisitor visitor)
-    {
-      ArgumentUtility.CheckNotNull ("visitor", visitor);
+		protected internal override Expression VisitChildren(ExpressionTreeVisitor visitor)
+		{
+			var newEvaluatedExpression = visitor.VisitExpression(_evaluatedExpression);
+			if (newEvaluatedExpression != _evaluatedExpression)
+				return new PartialEvaluationExceptionExpression(_exception, newEvaluatedExpression);
+			else
+				return this;
+		}
 
-      var newEvaluatedExpression = visitor.VisitExpression (_evaluatedExpression);
-      if (newEvaluatedExpression != _evaluatedExpression)
-        return new PartialEvaluationExceptionExpression (_exception, newEvaluatedExpression);
-      else
-        return this;
-    }
+		public override Expression Accept(ExpressionTreeVisitor visitor)
+		{
+			var specificVisitor = visitor as IPartialEvaluationExceptionExpressionVisitor;
+			if (specificVisitor != null)
+				return specificVisitor.VisitPartialEvaluationExceptionExpression(this);
+			else
+				return base.Accept(visitor);
+		}
 
-    public override Expression Accept (ExpressionTreeVisitor visitor)
-    {
-      ArgumentUtility.CheckNotNull ("visitor", visitor);
-
-      var specificVisitor = visitor as IPartialEvaluationExceptionExpressionVisitor;
-      if (specificVisitor != null)
-        return specificVisitor.VisitPartialEvaluationExceptionExpression (this);
-      else
-        return base.Accept (visitor);
-    }
-
-    public override string ToString ()
-    {
-      return string.Format (
-          @"PartialEvalException ({0} (""{1}""), {2})",
-          _exception.GetType().Name,
-          _exception.Message,
-          FormattingExpressionTreeVisitor.Format (_evaluatedExpression));
-    }
-  }
+		public override string ToString()
+		{
+			return string.Format(
+				@"PartialEvalException ({0} (""{1}""), {2})",
+				_exception.GetType().Name,
+				_exception.Message,
+				FormattingExpressionTreeVisitor.Format(_evaluatedExpression));
+		}
+	}
 }

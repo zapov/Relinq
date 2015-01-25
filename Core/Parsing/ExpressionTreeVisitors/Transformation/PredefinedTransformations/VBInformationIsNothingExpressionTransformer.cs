@@ -14,41 +14,37 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.PredefinedTransformations
 {
-  /// <summary>
-  /// Detects expressions calling the Information.IsNothing (...) method used by Visual Basic .NET, and replaces them with 
-  /// <see cref="BinaryExpression"/> instances comparing with <see langword="null" />. Providers use this transformation to be able to 
-  /// handle queries using IsNothing (...) more easily.
-  /// </summary>
-  public class VBInformationIsNothingExpressionTransformer : IExpressionTransformer<MethodCallExpression>
-  {
-    private const string c_vbInformationClassName = "Microsoft.VisualBasic.Information";
-    private const string c_vbIsNothingMethodName = "IsNothing";
+	/// <summary>
+	/// Detects expressions calling the Information.IsNothing (...) method used by Visual Basic .NET, and replaces them with 
+	/// <see cref="BinaryExpression"/> instances comparing with <see langword="null" />. Providers use this transformation to be able to 
+	/// handle queries using IsNothing (...) more easily.
+	/// </summary>
+	public class VBInformationIsNothingExpressionTransformer : IExpressionTransformer<MethodCallExpression>
+	{
+		private const string c_vbInformationClassName = "Microsoft.VisualBasic.Information";
+		private const string c_vbIsNothingMethodName = "IsNothing";
 
-    public ExpressionType[] SupportedExpressionTypes
-    {
-      get { return new[] { ExpressionType.Call }; }
-    }
+		public ExpressionType[] SupportedExpressionTypes
+		{
+			get { return new[] { ExpressionType.Call }; }
+		}
 
-    public Expression Transform (MethodCallExpression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
+		public Expression Transform(MethodCallExpression expression)
+		{
+			if (IsVBIsNothing(expression.Method))
+				return Expression.Equal(expression.Arguments[0], Expression.Constant(null));
 
-      if (IsVBIsNothing (expression.Method))
-        return Expression.Equal (expression.Arguments[0], Expression.Constant (null));
-      
-      return expression;
-    }
+			return expression;
+		}
 
-    private bool IsVBIsNothing (MethodInfo operatorMethod)
-    {
-      return operatorMethod.DeclaringType.FullName == c_vbInformationClassName && operatorMethod.Name == c_vbIsNothingMethodName;
-    }
-  }
+		private bool IsVBIsNothing(MethodInfo operatorMethod)
+		{
+			return operatorMethod.DeclaringType.FullName == c_vbInformationClassName && operatorMethod.Name == c_vbIsNothingMethodName;
+		}
+	}
 }

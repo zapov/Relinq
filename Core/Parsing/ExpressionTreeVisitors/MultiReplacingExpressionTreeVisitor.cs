@@ -14,58 +14,51 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors
 {
-  /// <summary>
-  /// Replaces <see cref="Expression"/> nodes according to a given mapping specification. Expressions are also replaced within subqueries; the 
-  /// <see cref="QueryModel"/> is changed by the replacement operations, it is not copied. The replacement node is not recursively searched for 
-  /// occurrences of <see cref="Expression"/> nodes to be replaced.
-  /// </summary>
-  public class MultiReplacingExpressionTreeVisitor : ExpressionTreeVisitor
-  {
-    private readonly IDictionary<Expression, Expression> _expressionMapping;
+	/// <summary>
+	/// Replaces <see cref="Expression"/> nodes according to a given mapping specification. Expressions are also replaced within subqueries; the 
+	/// <see cref="QueryModel"/> is changed by the replacement operations, it is not copied. The replacement node is not recursively searched for 
+	/// occurrences of <see cref="Expression"/> nodes to be replaced.
+	/// </summary>
+	public class MultiReplacingExpressionTreeVisitor : ExpressionTreeVisitor
+	{
+		private readonly IDictionary<Expression, Expression> _expressionMapping;
 
-    public static Expression Replace (IDictionary<Expression, Expression> expressionMapping, Expression sourceTree)
-    {
-      ArgumentUtility.CheckNotNull ("expressionMapping", expressionMapping);
-      ArgumentUtility.CheckNotNull ("sourceTree", sourceTree);
+		public static Expression Replace(IDictionary<Expression, Expression> expressionMapping, Expression sourceTree)
+		{
+			var visitor = new MultiReplacingExpressionTreeVisitor(expressionMapping);
+			return visitor.VisitExpression(sourceTree);
+		}
 
-      var visitor = new MultiReplacingExpressionTreeVisitor (expressionMapping);
-      return visitor.VisitExpression (sourceTree);
-    }
+		private MultiReplacingExpressionTreeVisitor(IDictionary<Expression, Expression> expressionMapping)
+		{
+			_expressionMapping = expressionMapping;
+		}
 
-    private MultiReplacingExpressionTreeVisitor (IDictionary<Expression, Expression> expressionMapping)
-    {
-      ArgumentUtility.CheckNotNull ("expressionMapping", expressionMapping);
+		public override Expression VisitExpression(Expression expression)
+		{
+			Expression replacementExpression;
+			if (expression != null && _expressionMapping.TryGetValue(expression, out replacementExpression))
+				return replacementExpression;
+			else
+				return base.VisitExpression(expression);
+		}
 
-      _expressionMapping = expressionMapping;
-    }
+		protected override Expression VisitSubQueryExpression(SubQueryExpression expression)
+		{
+			expression.QueryModel.TransformExpressions(VisitExpression);
+			return expression; // Note that we modifiy the (mutable) QueryModel, we return an unchanged expression
+		}
 
-    public override Expression VisitExpression (Expression expression)
-    {
-      Expression replacementExpression;
-      if (expression != null && _expressionMapping.TryGetValue (expression, out replacementExpression))
-        return replacementExpression;
-      else
-        return base.VisitExpression (expression);
-    }
-
-    protected override Expression VisitSubQueryExpression (SubQueryExpression expression)
-    {
-      expression.QueryModel.TransformExpressions (VisitExpression);
-      return expression; // Note that we modifiy the (mutable) QueryModel, we return an unchanged expression
-    }
-
-    protected internal override Expression VisitUnknownNonExtensionExpression (Expression expression)
-    {
-      //ignore
-      return expression;
-    }
-  }
+		protected internal override Expression VisitUnknownNonExtensionExpression(Expression expression)
+		{
+			//ignore
+			return expression;
+		}
+	}
 }

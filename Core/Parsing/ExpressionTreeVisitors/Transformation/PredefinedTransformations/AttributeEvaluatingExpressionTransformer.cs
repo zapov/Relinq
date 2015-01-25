@@ -18,97 +18,93 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.PredefinedTransformations
 {
-  /// <summary>
-  /// Dynamically discovers attributes implementing the <see cref="IMethodCallExpressionTransformerAttribute"/> interface on methods and get accessors
-  /// invoked by <see cref="MethodCallExpression"/> or <see cref="MemberExpression"/> instances and applies the respective 
-  /// <see cref="IExpressionTransformer{T}"/>.
-  /// </summary>
-  public class AttributeEvaluatingExpressionTransformer : IExpressionTransformer<Expression>
-  {
-    /// <summary>
-    /// Defines an interface for attributes providing an <see cref="IExpressionTransformer{T}"/> for a given <see cref="MethodCallExpression"/>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <see cref="AttributeEvaluatingExpressionTransformer"/> detects attributes implementing this interface while expressions are parsed 
-    /// and uses the <see cref="IExpressionTransformer{T}"/> returned by <see cref="GetExpressionTransformer"/> to modify the expressions.
-    /// </para>
-    /// <para>
-    /// Only one attribute instance implementing <see cref="IMethodCallExpressionTransformerAttribute"/> must be applied to a single method or property
-    /// get accessor.
-    /// </para>
-    /// </remarks>
-    public interface IMethodCallExpressionTransformerAttribute
-    {
-      IExpressionTransformer<MethodCallExpression> GetExpressionTransformer (MethodCallExpression expression);
-    }
+	/// <summary>
+	/// Dynamically discovers attributes implementing the <see cref="IMethodCallExpressionTransformerAttribute"/> interface on methods and get accessors
+	/// invoked by <see cref="MethodCallExpression"/> or <see cref="MemberExpression"/> instances and applies the respective 
+	/// <see cref="IExpressionTransformer{T}"/>.
+	/// </summary>
+	public class AttributeEvaluatingExpressionTransformer : IExpressionTransformer<Expression>
+	{
+		/// <summary>
+		/// Defines an interface for attributes providing an <see cref="IExpressionTransformer{T}"/> for a given <see cref="MethodCallExpression"/>.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// <see cref="AttributeEvaluatingExpressionTransformer"/> detects attributes implementing this interface while expressions are parsed 
+		/// and uses the <see cref="IExpressionTransformer{T}"/> returned by <see cref="GetExpressionTransformer"/> to modify the expressions.
+		/// </para>
+		/// <para>
+		/// Only one attribute instance implementing <see cref="IMethodCallExpressionTransformerAttribute"/> must be applied to a single method or property
+		/// get accessor.
+		/// </para>
+		/// </remarks>
+		public interface IMethodCallExpressionTransformerAttribute
+		{
+			IExpressionTransformer<MethodCallExpression> GetExpressionTransformer(MethodCallExpression expression);
+		}
 
-    public ExpressionType[] SupportedExpressionTypes
-    {
-      get { return new[] { ExpressionType.Call, ExpressionType.MemberAccess }; }
-    }
+		public ExpressionType[] SupportedExpressionTypes
+		{
+			get { return new[] { ExpressionType.Call, ExpressionType.MemberAccess }; }
+		}
 
-    public Expression Transform (Expression expression)
-    {
-      ArgumentUtility.CheckNotNull ("expression", expression);
+		public Expression Transform(Expression expression)
+		{
+			var memberExpression = expression as MemberExpression;
+			if (memberExpression != null && memberExpression.Member is PropertyInfo)
+			{
+				var property = (PropertyInfo)memberExpression.Member;
+				var getter = property.GetGetMethod();
 
-      var memberExpression = expression as MemberExpression;
-      if (memberExpression != null && memberExpression.Member is PropertyInfo)
-      {
-        var property = (PropertyInfo) memberExpression.Member;
-        var getter = property.GetMethod;
-        Assertion.IsNotNull (getter);
+				var methodCallExpressionTransformerProvider = GetTransformerProvider(getter);
+				if (methodCallExpressionTransformerProvider != null)
+					return ApplyTransformer(methodCallExpressionTransformerProvider, Expression.Call(memberExpression.Expression, getter));
+			}
 
-        var methodCallExpressionTransformerProvider = GetTransformerProvider (getter);
-        if (methodCallExpressionTransformerProvider != null)
-          return ApplyTransformer (methodCallExpressionTransformerProvider, Expression.Call (memberExpression.Expression, getter));
-      }
+			var methodCallExpression = expression as MethodCallExpression;
+			if (methodCallExpression != null)
+			{
+				var methodCallExpressionTransformerProvider = GetTransformerProvider(methodCallExpression.Method);
+				if (methodCallExpressionTransformerProvider != null)
+					return ApplyTransformer(methodCallExpressionTransformerProvider, methodCallExpression);
+			}
 
-      var methodCallExpression = expression as MethodCallExpression;
-      if (methodCallExpression != null)
-      {
-        var methodCallExpressionTransformerProvider = GetTransformerProvider (methodCallExpression.Method);
-        if (methodCallExpressionTransformerProvider != null)
-            return ApplyTransformer (methodCallExpressionTransformerProvider, methodCallExpression);
-      }
+			return expression;
+		}
 
-      return expression;
-    }
+		private static IMethodCallExpressionTransformerAttribute GetTransformerProvider(MethodInfo methodInfo)
+		{
+			var attributes = methodInfo.GetCustomAttributes(true).OfType<IMethodCallExpressionTransformerAttribute>().ToArray();
 
-    private static IMethodCallExpressionTransformerAttribute GetTransformerProvider (MethodInfo methodInfo)
-    {
-      var attributes = methodInfo.GetCustomAttributes (true).OfType<IMethodCallExpressionTransformerAttribute>().ToArray();
+			if (attributes.Length > 1)
+			{
+				var message = string.Format(
+					"There is more than one attribute providing transformers declared for method '{0}.{1}'.",
+					methodInfo.DeclaringType,
+					methodInfo.Name);
+				throw new InvalidOperationException(message);
+			}
 
-      if (attributes.Length > 1)
-      {
-        var message = string.Format (
-            "There is more than one attribute providing transformers declared for method '{0}.{1}'.",
-            methodInfo.DeclaringType,
-            methodInfo.Name);
-        throw new InvalidOperationException (message);
-      }
+			return attributes.SingleOrDefault();
+		}
 
-      return attributes.SingleOrDefault();
-    }
+		private static Expression ApplyTransformer(IMethodCallExpressionTransformerAttribute provider, MethodCallExpression methodCallExpression)
+		{
+			var expressionTransformer = provider.GetExpressionTransformer(methodCallExpression);
+			if (expressionTransformer == null)
+			{
+				var message = string.Format(
+					"The '{0}' on method '{1}.{2}' returned 'null' instead of a transformer.",
+					provider.GetType().Name,
+					methodCallExpression.Method.DeclaringType,
+					methodCallExpression.Method.Name);
+				throw new InvalidOperationException(message);
+			}
 
-    private static Expression ApplyTransformer (IMethodCallExpressionTransformerAttribute provider, MethodCallExpression methodCallExpression)
-    {
-      var expressionTransformer = provider.GetExpressionTransformer (methodCallExpression);
-      if (expressionTransformer == null)
-      {
-        var message = string.Format (
-            "The '{0}' on method '{1}.{2}' returned 'null' instead of a transformer.",
-            provider.GetType().Name,
-            methodCallExpression.Method.DeclaringType,
-            methodCallExpression.Method.Name);
-        throw new InvalidOperationException (message);
-      }
-
-      return expressionTransformer.Transform (methodCallExpression);
-    }
-  }
+			return expressionTransformer.Transform(methodCallExpression);
+		}
+	}
 }

@@ -18,51 +18,43 @@ using System;
 using System.Reflection;
 using Remotion.Linq.Clauses.ResultOperators;
 using Remotion.Linq.Utilities;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.StreamedData
 {
-  /// <summary>
-  /// Describes a scalar value streamed out of a <see cref="QueryModel"/> or <see cref="ResultOperatorBase"/>. A scalar value corresponds to a
-  /// value calculated from the result set, as produced by <see cref="CountResultOperator"/> or <see cref="ContainsResultOperator"/>, for instance.
-  /// </summary>
-  public class StreamedScalarValueInfo : StreamedValueInfo
-  {
-    private static readonly MethodInfo s_executeMethod = 
-        (typeof (StreamedScalarValueInfo).GetRuntimeMethodChecked ("ExecuteScalarQueryModel", new[] { typeof (QueryModel), typeof (IQueryExecutor) }));
+	/// <summary>
+	/// Describes a scalar value streamed out of a <see cref="QueryModel"/> or <see cref="ResultOperatorBase"/>. A scalar value corresponds to a
+	/// value calculated from the result set, as produced by <see cref="CountResultOperator"/> or <see cref="ContainsResultOperator"/>, for instance.
+	/// </summary>
+	public class StreamedScalarValueInfo : StreamedValueInfo
+	{
+		private static readonly MethodInfo s_executeMethod =
+			(typeof(StreamedScalarValueInfo).GetRuntimeMethodChecked("ExecuteScalarQueryModel", new[] { typeof(QueryModel), typeof(IQueryExecutor) }));
 
-    public StreamedScalarValueInfo (Type dataType)
-        : base(dataType)
-    {
-    }
+		public StreamedScalarValueInfo(Type dataType)
+			: base(dataType)
+		{
+		}
 
-    public override IStreamedData ExecuteQueryModel (QueryModel queryModel, IQueryExecutor executor)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
-      ArgumentUtility.CheckNotNull ("executor", executor);
+		public override IStreamedData ExecuteQueryModel(QueryModel queryModel, IQueryExecutor executor)
+		{
+			var executeMethod = s_executeMethod.MakeGenericMethod(DataType);
 
-      var executeMethod = s_executeMethod.MakeGenericMethod (DataType);
-      
-      // wrap executeMethod into a delegate instead of calling Invoke in order to allow for exceptions that are bubbled up correctly
-      var func = (Func<QueryModel, IQueryExecutor, object>) executeMethod.CreateDelegate (typeof (Func<QueryModel, IQueryExecutor, object>), this);
+			// wrap executeMethod into a delegate instead of calling Invoke in order to allow for exceptions that are bubbled up correctly
+			var func = (Func<QueryModel, IQueryExecutor, object>)Delegate.CreateDelegate(typeof(Func<QueryModel, IQueryExecutor, object>), this, executeMethod);
 
-      var result = func (queryModel, executor);
+			var result = func(queryModel, executor);
 
-      return new StreamedValue (result, this);
-    }
+			return new StreamedValue(result, this);
+		}
 
-    protected override StreamedValueInfo CloneWithNewDataType (Type dataType)
-    {
-      ArgumentUtility.CheckNotNull ("dataType", dataType);
-      return new StreamedScalarValueInfo (dataType);
-    }
+		protected override StreamedValueInfo CloneWithNewDataType(Type dataType)
+		{
+			return new StreamedScalarValueInfo(dataType);
+		}
 
-    public object ExecuteScalarQueryModel<T> (QueryModel queryModel, IQueryExecutor executor)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
-      ArgumentUtility.CheckNotNull ("executor", executor);
-
-      return executor.ExecuteScalar<T> (queryModel);
-    }
-  }
+		public object ExecuteScalarQueryModel<T>(QueryModel queryModel, IQueryExecutor executor)
+		{
+			return executor.ExecuteScalar<T>(queryModel);
+		}
+	}
 }

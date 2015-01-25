@@ -19,19 +19,19 @@ using System.Collections.ObjectModel;
 
 namespace Remotion.Linq.Collections
 {
-  /// <summary>
-  /// Provides event data for <see cref="ObservableCollection{T}"/>'s events.
-  /// </summary>
-  /// <typeparam name="T">The type of the items managed by the <see cref="ObservableCollection{T}"/>.</typeparam>
-  public class ObservableCollectionChangedEventArgs<T> : EventArgs
-  {
-    public int Index { get; set; }
-    public T Item { get; set; }
+	/// <summary>
+	/// Provides event data for <see cref="ObservableCollection{T}"/>'s events.
+	/// </summary>
+	/// <typeparam name="T">The type of the items managed by the <see cref="ObservableCollection{T}"/>.</typeparam>
+	public class ObservableCollectionChangedEventArgs<T> : EventArgs
+	{
+		public int Index { get; set; }
+		public T Item { get; set; }
 
-    public ObservableCollectionChangedEventArgs (int index, T item)
-    {
-      Index = index;
-      Item = item;
-    }
-  }
+		public ObservableCollectionChangedEventArgs(int index, T item)
+		{
+			Index = index;
+			Item = item;
+		}
+	}
 }

@@ -14,27 +14,26 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation
 {
-  /// <summary>
-  /// <see cref="IExpressionTranformationProvider"/> defines an API for classes returning <see cref="ExpressionTransformation"/> instances for specific 
-  /// <see cref="Expression"/> objects. Usually, the <see cref="ExpressionTransformerRegistry"/> will be used when an implementation of this
-  /// interface is needed.
-  /// </summary>
-  public interface IExpressionTranformationProvider
-  {
-    /// <summary>
-    /// Gets the transformers for the given <see cref="Expression"/>.
-    /// </summary>
-    /// <param name="expression">The <see cref="Expression"/> to be transformed.</param>
-    /// <returns>
-    /// A sequence containing <see cref="ExpressionTransformation"/> objects that should be applied to the <paramref name="expression"/>. Must not
-    /// be <see langword="null" />.
-    /// </returns>
-    IEnumerable<ExpressionTransformation> GetTransformations (Expression expression);
-  }
+	/// <summary>
+	/// <see cref="IExpressionTranformationProvider"/> defines an API for classes returning <see cref="ExpressionTransformation"/> instances for specific 
+	/// <see cref="Expression"/> objects. Usually, the <see cref="ExpressionTransformerRegistry"/> will be used when an implementation of this
+	/// interface is needed.
+	/// </summary>
+	public interface IExpressionTranformationProvider
+	{
+		/// <summary>
+		/// Gets the transformers for the given <see cref="Expression"/>.
+		/// </summary>
+		/// <param name="expression">The <see cref="Expression"/> to be transformed.</param>
+		/// <returns>
+		/// A sequence containing <see cref="ExpressionTransformation"/> objects that should be applied to the <paramref name="expression"/>. Must not
+		/// be <see langword="null" />.
+		/// </returns>
+		IEnumerable<ExpressionTransformation> GetTransformations(Expression expression);
+	}
 }

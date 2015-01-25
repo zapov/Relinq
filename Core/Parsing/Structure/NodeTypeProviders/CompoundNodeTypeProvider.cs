@@ -18,42 +18,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.NodeTypeProviders
 {
-  /// <summary>
-  /// Implements <see cref="INodeTypeProvider"/> by storing a list of inner <see cref="INodeTypeProvider"/> instances.
-  /// The <see cref="IsRegistered"/> and <see cref="GetNodeType"/> methods delegate to these inner instances. This is an
-  /// implementation of the Composite Pattern.
-  /// </summary>
-  public sealed class CompoundNodeTypeProvider : INodeTypeProvider
-  {
-    private readonly List<INodeTypeProvider> _innerProviders;
+	/// <summary>
+	/// Implements <see cref="INodeTypeProvider"/> by storing a list of inner <see cref="INodeTypeProvider"/> instances.
+	/// The <see cref="IsRegistered"/> and <see cref="GetNodeType"/> methods delegate to these inner instances. This is an
+	/// implementation of the Composite Pattern.
+	/// </summary>
+	public sealed class CompoundNodeTypeProvider : INodeTypeProvider
+	{
+		private readonly List<INodeTypeProvider> _innerProviders;
 
-    public CompoundNodeTypeProvider (IEnumerable<INodeTypeProvider> innerProviders)
-    {
-      ArgumentUtility.CheckNotNull ("innerProviders", innerProviders);
-      _innerProviders = new List<INodeTypeProvider> (innerProviders);
-    }
+		public CompoundNodeTypeProvider(IEnumerable<INodeTypeProvider> innerProviders)
+		{
+			_innerProviders = new List<INodeTypeProvider>(innerProviders);
+		}
 
-    public IList<INodeTypeProvider> InnerProviders
-    {
-      get { return _innerProviders; }
-    }
+		public IList<INodeTypeProvider> InnerProviders
+		{
+			get { return _innerProviders; }
+		}
 
-    public bool IsRegistered (MethodInfo method)
-    {
-      ArgumentUtility.CheckNotNull ("method", method);
+		public bool IsRegistered(MethodInfo method)
+		{
+			return _innerProviders.Any(p => p.IsRegistered(method));
+		}
 
-      return _innerProviders.Any (p => p.IsRegistered (method));
-    }
-
-    public Type GetNodeType (MethodInfo method)
-    {
-      ArgumentUtility.CheckNotNull ("method", method);
-
-      return InnerProviders.Select (p => p.GetNodeType (method)).FirstOrDefault (t => t != null);
-    }
-  }
+		public Type GetNodeType(MethodInfo method)
+		{
+			return InnerProviders.Select(p => p.GetNodeType(method)).FirstOrDefault(t => t != null);
+		}
+	}
 }

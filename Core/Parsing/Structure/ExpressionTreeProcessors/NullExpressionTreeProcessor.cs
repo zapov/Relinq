@@ -14,22 +14,19 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.ExpressionTreeProcessors
 {
-  /// <summary>
-  /// Implements the <see cref="IExpressionTreeProcessor"/> interface by doing nothing in the <see cref="Process"/> method. This is an
-  /// implementation of the Null Object Pattern.
-  /// </summary>
-  public sealed class NullExpressionTreeProcessor : IExpressionTreeProcessor
-  {
-    public Expression Process (Expression expressionTree)
-    {
-      ArgumentUtility.CheckNotNull ("expressionTree", expressionTree);
-      return expressionTree;
-    }
-  }
+	/// <summary>
+	/// Implements the <see cref="IExpressionTreeProcessor"/> interface by doing nothing in the <see cref="Process"/> method. This is an
+	/// implementation of the Null Object Pattern.
+	/// </summary>
+	public sealed class NullExpressionTreeProcessor : IExpressionTreeProcessor
+	{
+		public Expression Process(Expression expressionTree)
+		{
+			return expressionTree;
+		}
+	}
 }

@@ -18,52 +18,50 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents counting the number of items returned by a query.
-  /// This is a result operator, operating on the whole result set of a query.
-  /// </summary>
-  /// <remarks>
-  /// "Count" query methods taking a predicate are represented as a combination of a <see cref="WhereClause"/> and a <see cref="CountResultOperator"/>.
-  /// </remarks>  /// <example>
-  /// In C#, the "Count" call in the following example corresponds to a <see cref="CountResultOperator"/>.
-  /// <code>
-  /// var query = (from s in Students
-  ///              select s).Count();
-  /// </code>
-  /// </example>
-  public class CountResultOperator : ValueFromSequenceResultOperatorBase
-  {
-    public override ResultOperatorBase Clone (CloneContext cloneContext)
-    {
-      return new CountResultOperator();
-    }
+	/// <summary>
+	/// Represents counting the number of items returned by a query.
+	/// This is a result operator, operating on the whole result set of a query.
+	/// </summary>
+	/// <remarks>
+	/// "Count" query methods taking a predicate are represented as a combination of a <see cref="WhereClause"/> and a <see cref="CountResultOperator"/>.
+	/// </remarks>  /// <example>
+	/// In C#, the "Count" call in the following example corresponds to a <see cref="CountResultOperator"/>.
+	/// <code>
+	/// var query = (from s in Students
+	///              select s).Count();
+	/// </code>
+	/// </example>
+	public class CountResultOperator : ValueFromSequenceResultOperatorBase
+	{
+		public override ResultOperatorBase Clone(CloneContext cloneContext)
+		{
+			return new CountResultOperator();
+		}
 
-    public override StreamedValue ExecuteInMemory<T> (StreamedSequence input)
-    {
-      var sequence = input.GetTypedSequence<T> ();
-      var result = sequence.Count ();
-      return new StreamedValue (result, (StreamedValueInfo) GetOutputDataInfo (input.DataInfo));
-    }
+		public override StreamedValue ExecuteInMemory<T>(StreamedSequence input)
+		{
+			var sequence = input.GetTypedSequence<T>();
+			var result = sequence.Count();
+			return new StreamedValue(result, (StreamedValueInfo)GetOutputDataInfo(input.DataInfo));
+		}
 
-    public override IStreamedDataInfo GetOutputDataInfo (IStreamedDataInfo inputInfo)
-    {
-      ArgumentUtility.CheckNotNullAndType<StreamedSequenceInfo> ("inputInfo", inputInfo);
-      return new StreamedScalarValueInfo (typeof (int));
-    }
+		public override IStreamedDataInfo GetOutputDataInfo(IStreamedDataInfo inputInfo)
+		{
+			return new StreamedScalarValueInfo(typeof(int));
+		}
 
-    /// <inheritdoc />
-    public override void TransformExpressions (Func<Expression, Expression> transformation)
-    {
-      //nothing to do here
-    }
+		/// <inheritdoc />
+		public override void TransformExpressions(Func<Expression, Expression> transformation)
+		{
+			//nothing to do here
+		}
 
-    public override string ToString ()
-    {
-      return "Count()";
-    }
-  }
+		public override string ToString()
+		{
+			return "Count()";
+		}
+	}
 }

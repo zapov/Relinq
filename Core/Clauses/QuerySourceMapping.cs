@@ -18,62 +18,53 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.ExpressionTreeVisitors;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses
 {
-  /// <summary>
-  /// Maps <see cref="IQuerySource"/> instances to <see cref="Expression"/> instances. This is used by <see cref="QueryModel.Clone()"/>
-  /// in order to be able to correctly update references to old clauses to point to the new clauses. Via 
-  /// <see cref="ReferenceReplacingExpressionTreeVisitor"/> and <see cref="CloningExpressionTreeVisitor"/>, it can also be used manually.
-  /// </summary>
-  public sealed class QuerySourceMapping
-  {
-    private readonly Dictionary<IQuerySource, Expression> _lookup = new Dictionary<IQuerySource, Expression> ();
+	/// <summary>
+	/// Maps <see cref="IQuerySource"/> instances to <see cref="Expression"/> instances. This is used by <see cref="QueryModel.Clone()"/>
+	/// in order to be able to correctly update references to old clauses to point to the new clauses. Via 
+	/// <see cref="ReferenceReplacingExpressionTreeVisitor"/> and <see cref="CloningExpressionTreeVisitor"/>, it can also be used manually.
+	/// </summary>
+	public sealed class QuerySourceMapping
+	{
+		private readonly Dictionary<IQuerySource, Expression> _lookup = new Dictionary<IQuerySource, Expression>();
 
-    public bool ContainsMapping (IQuerySource querySource)
-    {
-      ArgumentUtility.CheckNotNull ("querySource", querySource);
-      return _lookup.ContainsKey (querySource);
-    }
+		public bool ContainsMapping(IQuerySource querySource)
+		{
+			return _lookup.ContainsKey(querySource);
+		}
 
-    public void AddMapping (IQuerySource querySource, Expression expression)
-    {
-      ArgumentUtility.CheckNotNull ("querySource", querySource);
-      ArgumentUtility.CheckNotNull ("expression", expression);
+		public void AddMapping(IQuerySource querySource, Expression expression)
+		{
+			try
+			{
+				_lookup.Add(querySource, expression);
+			}
+			catch (ArgumentException)
+			{
+				throw new InvalidOperationException("Query source has already been associated with an expression.");
+			}
+		}
 
-      try
-      {
-        _lookup.Add (querySource, expression);
-      }
-      catch (ArgumentException)
-      {
-        throw new InvalidOperationException ("Query source has already been associated with an expression.");
-      }
-    }
+		public void ReplaceMapping(IQuerySource querySource, Expression expression)
+		{
+			if (!ContainsMapping(querySource))
+				throw new InvalidOperationException("Query source has not been associated with an expression, cannot replace its mapping.");
 
-    public void ReplaceMapping (IQuerySource querySource, Expression expression)
-    {
-      ArgumentUtility.CheckNotNull ("querySource", querySource);
-      ArgumentUtility.CheckNotNull ("expression", expression);
+			_lookup[querySource] = expression;
+		}
 
-      if (!ContainsMapping (querySource))
-        throw new InvalidOperationException ("Query source has not been associated with an expression, cannot replace its mapping.");
-
-      _lookup[querySource] = expression;
-    }
-
-    public Expression GetExpression (IQuerySource querySource)
-    {
-      ArgumentUtility.CheckNotNull ("querySource", querySource);
-      try
-      {
-        return _lookup[querySource];
-      }
-      catch (KeyNotFoundException)
-      {
-        throw new KeyNotFoundException ("Query source has not been associated with an expression.");
-      }
-    }
-  }
+		public Expression GetExpression(IQuerySource querySource)
+		{
+			try
+			{
+				return _lookup[querySource];
+			}
+			catch (KeyNotFoundException)
+			{
+				throw new KeyNotFoundException("Query source has not been associated with an expression.");
+			}
+		}
+	}
 }

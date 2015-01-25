@@ -18,60 +18,56 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents a check whether any items are returned by a query.
-  /// This is a result operator, operating on the whole result set of a query.
-  /// </summary>
-  /// <remarks>
-  /// "Any" query methods taking a predicate are represented as into a combination of a <see cref="WhereClause"/> and an 
-  /// <see cref="AnyResultOperator"/>.
-  /// </remarks>
-  /// <example>
-  /// In C#, the "Any" call in the following example corresponds to an <see cref="AnyResultOperator"/>.
-  /// <code>
-  /// var result = (from s in Students
-  ///              select s).Any();
-  /// </code>
-  /// </example>
-  public class AnyResultOperator : ValueFromSequenceResultOperatorBase
-  {
-    /// <inheritdoc cref="ResultOperatorBase.ExecuteInMemory" />
-    public override StreamedValue ExecuteInMemory<T> (StreamedSequence input)
-    {
-      ArgumentUtility.CheckNotNull ("input", input);
+	/// <summary>
+	/// Represents a check whether any items are returned by a query.
+	/// This is a result operator, operating on the whole result set of a query.
+	/// </summary>
+	/// <remarks>
+	/// "Any" query methods taking a predicate are represented as into a combination of a <see cref="WhereClause"/> and an 
+	/// <see cref="AnyResultOperator"/>.
+	/// </remarks>
+	/// <example>
+	/// In C#, the "Any" call in the following example corresponds to an <see cref="AnyResultOperator"/>.
+	/// <code>
+	/// var result = (from s in Students
+	///              select s).Any();
+	/// </code>
+	/// </example>
+	public class AnyResultOperator : ValueFromSequenceResultOperatorBase
+	{
+		/// <inheritdoc cref="ResultOperatorBase.ExecuteInMemory" />
+		public override StreamedValue ExecuteInMemory<T>(StreamedSequence input)
+		{
+			var sequence = input.GetTypedSequence<T>();
+			var result = sequence.Any();
+			return new StreamedValue(result, (StreamedValueInfo)GetOutputDataInfo(input.DataInfo));
+		}
 
-      var sequence = input.GetTypedSequence<T> ();
-      var result = sequence.Any ();
-      return new StreamedValue (result, (StreamedValueInfo) GetOutputDataInfo (input.DataInfo));
-    }
+		/// <inheritdoc />
+		public override ResultOperatorBase Clone(CloneContext cloneContext)
+		{
+			return new AnyResultOperator();
+		}
 
-    /// <inheritdoc />
-    public override ResultOperatorBase Clone (CloneContext cloneContext)
-    {
-      return new AnyResultOperator ();
-    }
+		/// <inheritdoc />
+		public override IStreamedDataInfo GetOutputDataInfo(IStreamedDataInfo inputInfo)
+		{
+			return new StreamedScalarValueInfo(typeof(bool));
+		}
 
-    /// <inheritdoc />
-    public override IStreamedDataInfo GetOutputDataInfo (IStreamedDataInfo inputInfo)
-    {
-      ArgumentUtility.CheckNotNullAndType<StreamedSequenceInfo> ("inputInfo", inputInfo);
-      return new StreamedScalarValueInfo (typeof (bool));
-    }
+		/// <inheritdoc />
+		public override void TransformExpressions(Func<Expression, Expression> transformation)
+		{
+			//nothing to do here
+		}
 
-    /// <inheritdoc />
-    public override void TransformExpressions (Func<Expression, Expression> transformation)
-    {
-      //nothing to do here
-    }
-
-    /// <inheritdoc />
-    public override string ToString ()
-    {
-      return "Any()";
-    }
-  }
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return "Any()";
+		}
+	}
 }

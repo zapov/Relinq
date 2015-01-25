@@ -18,66 +18,59 @@ using System;
 using System.Reflection;
 using Remotion.Linq.Clauses.ResultOperators;
 using Remotion.Linq.Utilities;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.StreamedData
 {
-  /// <summary>
-  /// Describes a single value streamed out of a <see cref="QueryModel"/> or <see cref="ResultOperatorBase"/>. A single value corresponds to one
-  /// item from the result set, as produced by <see cref="FirstResultOperator"/> or <see cref="SingleResultOperator"/>, for instance.
-  /// </summary>
-  public class StreamedSingleValueInfo : StreamedValueInfo
-  {
-    private static readonly MethodInfo s_executeMethod = 
-        (typeof (StreamedSingleValueInfo).GetRuntimeMethodChecked ("ExecuteSingleQueryModel", new[] { typeof (QueryModel), typeof (IQueryExecutor) }));
+	/// <summary>
+	/// Describes a single value streamed out of a <see cref="QueryModel"/> or <see cref="ResultOperatorBase"/>. A single value corresponds to one
+	/// item from the result set, as produced by <see cref="FirstResultOperator"/> or <see cref="SingleResultOperator"/>, for instance.
+	/// </summary>
+	public class StreamedSingleValueInfo : StreamedValueInfo
+	{
+		private static readonly MethodInfo s_executeMethod =
+			(typeof(StreamedSingleValueInfo).GetRuntimeMethodChecked("ExecuteSingleQueryModel", new[] { typeof(QueryModel), typeof(IQueryExecutor) }));
 
-    private readonly bool _returnDefaultWhenEmpty;
+		private readonly bool _returnDefaultWhenEmpty;
 
-    public StreamedSingleValueInfo (Type dataType, bool returnDefaultWhenEmpty)
-        : base(dataType)
-    {
-      _returnDefaultWhenEmpty = returnDefaultWhenEmpty;
-    }
+		public StreamedSingleValueInfo(Type dataType, bool returnDefaultWhenEmpty)
+			: base(dataType)
+		{
+			_returnDefaultWhenEmpty = returnDefaultWhenEmpty;
+		}
 
-    public bool ReturnDefaultWhenEmpty
-    {
-      get { return _returnDefaultWhenEmpty; }
-    }
+		public bool ReturnDefaultWhenEmpty
+		{
+			get { return _returnDefaultWhenEmpty; }
+		}
 
-    public override IStreamedData ExecuteQueryModel (QueryModel queryModel, IQueryExecutor executor)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
-      ArgumentUtility.CheckNotNull ("executor", executor);
+		public override IStreamedData ExecuteQueryModel(QueryModel queryModel, IQueryExecutor executor)
+		{
+			var executeMethod = s_executeMethod.MakeGenericMethod(DataType);
+			// wrap executeMethod into a delegate instead of calling Invoke in order to allow for exceptions that are bubbled up correctly
+			var func = (Func<QueryModel, IQueryExecutor, object>)Delegate.CreateDelegate(typeof(Func<QueryModel, IQueryExecutor, object>), this, executeMethod);
+			var result = func(queryModel, executor);
 
-      var executeMethod = s_executeMethod.MakeGenericMethod (DataType);
-      // wrap executeMethod into a delegate instead of calling Invoke in order to allow for exceptions that are bubbled up correctly
-      var func = (Func<QueryModel, IQueryExecutor, object>) executeMethod.CreateDelegate (typeof (Func<QueryModel, IQueryExecutor, object>), this);
-      var result = func (queryModel, executor);
+			return new StreamedValue(result, this);
+		}
 
-      return new StreamedValue (result, this);
-    }
+		protected override StreamedValueInfo CloneWithNewDataType(Type dataType)
+		{
+			return new StreamedSingleValueInfo(dataType, _returnDefaultWhenEmpty);
+		}
 
-    protected override StreamedValueInfo CloneWithNewDataType (Type dataType)
-    {
-      return new StreamedSingleValueInfo (dataType, _returnDefaultWhenEmpty);
-    }
+		public object ExecuteSingleQueryModel<T>(QueryModel queryModel, IQueryExecutor executor)
+		{
+			return executor.ExecuteSingle<T>(queryModel, _returnDefaultWhenEmpty);
+		}
 
-    public object ExecuteSingleQueryModel<T> (QueryModel queryModel, IQueryExecutor executor)
-    {
-      ArgumentUtility.CheckNotNull ("queryModel", queryModel);
-      ArgumentUtility.CheckNotNull ("executor", executor);
+		public override bool Equals(IStreamedDataInfo obj)
+		{
+			return base.Equals(obj) && ((StreamedSingleValueInfo)obj)._returnDefaultWhenEmpty == _returnDefaultWhenEmpty;
+		}
 
-      return executor.ExecuteSingle<T> (queryModel, _returnDefaultWhenEmpty);
-    }
-
-    public override bool Equals (IStreamedDataInfo obj)
-    {
-      return base.Equals (obj) && ((StreamedSingleValueInfo)obj)._returnDefaultWhenEmpty == _returnDefaultWhenEmpty;
-    }
-
-    public override int GetHashCode ()
-    {
-      return base.GetHashCode () ^ _returnDefaultWhenEmpty.GetHashCode();
-    }
-  }
+		public override int GetHashCode()
+		{
+			return base.GetHashCode() ^ _returnDefaultWhenEmpty.GetHashCode();
+		}
+	}
 }

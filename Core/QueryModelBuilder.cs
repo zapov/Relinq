@@ -18,93 +18,89 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Remotion.Linq.Clauses;
-using Remotion.Utilities;
 
 namespace Remotion.Linq
 {
-  /// <summary>
-  /// Collects clauses and creates a <see cref="QueryModel"/> from them. This provides a simple way to first add all the clauses and then
-  /// create the <see cref="QueryModel"/> rather than the two-step approach (first <see cref="SelectClause"/> and <see cref="MainFromClause"/>,
-  /// then the <see cref="IBodyClause"/>s) required by <see cref="QueryModel"/>'s constructor.
-  /// </summary>
-  public sealed class QueryModelBuilder
-  {
-    private readonly List<ResultOperatorBase> _resultOperators = new List<ResultOperatorBase>();
-    private readonly List<IBodyClause> _bodyClauses = new List<IBodyClause>();
+	/// <summary>
+	/// Collects clauses and creates a <see cref="QueryModel"/> from them. This provides a simple way to first add all the clauses and then
+	/// create the <see cref="QueryModel"/> rather than the two-step approach (first <see cref="SelectClause"/> and <see cref="MainFromClause"/>,
+	/// then the <see cref="IBodyClause"/>s) required by <see cref="QueryModel"/>'s constructor.
+	/// </summary>
+	public sealed class QueryModelBuilder
+	{
+		private readonly List<ResultOperatorBase> _resultOperators = new List<ResultOperatorBase>();
+		private readonly List<IBodyClause> _bodyClauses = new List<IBodyClause>();
 
-    public MainFromClause MainFromClause { get; private set; }
-    public SelectClause SelectClause { get; private set; }
+		public MainFromClause MainFromClause { get; private set; }
+		public SelectClause SelectClause { get; private set; }
 
-    public ReadOnlyCollection<IBodyClause> BodyClauses
-    {
-      get { return new ReadOnlyCollection<IBodyClause> (_bodyClauses); }
-    }
+		public ReadOnlyCollection<IBodyClause> BodyClauses
+		{
+			get { return new ReadOnlyCollection<IBodyClause>(_bodyClauses); }
+		}
 
-    public ReadOnlyCollection<ResultOperatorBase> ResultOperators
-    {
-      get { return new ReadOnlyCollection<ResultOperatorBase> (_resultOperators); }
-    }
+		public ReadOnlyCollection<ResultOperatorBase> ResultOperators
+		{
+			get { return new ReadOnlyCollection<ResultOperatorBase>(_resultOperators); }
+		}
 
-    public void AddClause (IClause clause)
-    {
-      ArgumentUtility.CheckNotNull ("clause", clause);
+		public void AddClause(IClause clause)
+		{
+			var clauseAsMainFromClause = clause as MainFromClause;
+			if (clauseAsMainFromClause != null)
+			{
+				if (MainFromClause != null)
+					throw new InvalidOperationException("Builder already has a MainFromClause.");
 
-      var clauseAsMainFromClause = clause as MainFromClause;
-      if (clauseAsMainFromClause != null)
-      {
-        if (MainFromClause != null)
-          throw new InvalidOperationException ("Builder already has a MainFromClause.");
+				MainFromClause = clauseAsMainFromClause;
+				return;
+			}
 
-        MainFromClause = clauseAsMainFromClause;
-        return;
-      }
+			var clauseAsSelectClause = clause as SelectClause;
+			if (clauseAsSelectClause != null)
+			{
+				if (SelectClause != null)
+					throw new InvalidOperationException("Builder already has a SelectClause.");
 
-      var clauseAsSelectClause = clause as SelectClause;
-      if (clauseAsSelectClause != null)
-      {
-        if (SelectClause != null)
-          throw new InvalidOperationException ("Builder already has a SelectClause.");
+				SelectClause = clauseAsSelectClause;
+				return;
+			}
 
-        SelectClause = clauseAsSelectClause;
-        return;
-      }
+			var clauseAsBodyClause = clause as IBodyClause;
+			if (clauseAsBodyClause != null)
+			{
+				_bodyClauses.Add(clauseAsBodyClause);
+				return;
+			}
 
-      var clauseAsBodyClause = clause as IBodyClause;
-      if (clauseAsBodyClause != null)
-      {
-        _bodyClauses.Add (clauseAsBodyClause);
-        return;
-      }
+			var message = string.Format(
+				"Cannot add clause of type '{0}' to a query model. Only instances of IBodyClause, MainFromClause, or ISelectGroupClause are supported.",
+				clause.GetType());
+			throw new ArgumentException(message, "clause");
+		}
 
-      var message = string.Format (
-          "Cannot add clause of type '{0}' to a query model. Only instances of IBodyClause, MainFromClause, or ISelectGroupClause are supported.",
-          clause.GetType());
-      throw new ArgumentException (message, "clause");
-    }
+		public void AddResultOperator(ResultOperatorBase resultOperator)
+		{
+			_resultOperators.Add(resultOperator);
+		}
 
-    public void AddResultOperator (ResultOperatorBase resultOperator)
-    {
-      ArgumentUtility.CheckNotNull ("resultOperator", resultOperator);
-      _resultOperators.Add (resultOperator);
-    }
+		public QueryModel Build()
+		{
+			if (MainFromClause == null)
+				throw new InvalidOperationException("No MainFromClause was added to the builder.");
 
-    public QueryModel Build ()
-    {
-      if (MainFromClause == null)
-        throw new InvalidOperationException ("No MainFromClause was added to the builder.");
+			if (SelectClause == null)
+				throw new InvalidOperationException("No SelectOrGroupClause was added to the builder.");
 
-      if (SelectClause == null)
-        throw new InvalidOperationException ("No SelectOrGroupClause was added to the builder.");
+			var queryModel = new QueryModel(MainFromClause, SelectClause);
 
-      var queryModel = new QueryModel (MainFromClause, SelectClause);
+			foreach (var bodyClause in BodyClauses)
+				queryModel.BodyClauses.Add(bodyClause);
 
-      foreach (var bodyClause in BodyClauses)
-        queryModel.BodyClauses.Add (bodyClause);
+			foreach (var resultOperator in ResultOperators)
+				queryModel.ResultOperators.Add(resultOperator);
 
-      foreach (var resultOperator in ResultOperators)
-        queryModel.ResultOperators.Add (resultOperator);
-
-      return queryModel;
-    }
-  }
+			return queryModel;
+		}
+	}
 }

@@ -14,11 +14,10 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 
 namespace Remotion.Linq.Parsing.Structure.IntermediateModel
 {
-  public interface IQuerySourceExpressionNode : IExpressionNode
-  {
-  }
+	public interface IQuerySourceExpressionNode : IExpressionNode
+	{
+	}
 }

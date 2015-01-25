@@ -20,28 +20,28 @@ using System.Reflection;
 // ReSharper disable once CheckNamespace
 namespace Remotion.Utilities
 {
-  static partial class ExceptionUtility
-  {
-    private static readonly Lazy<Action<Exception>> s_internalPreserveStackTrace = new Lazy<Action<Exception>> (GetInternalPreserveStackTrace);
+	static partial class ExceptionUtility
+	{
+		private static readonly Lazy<Action<Exception>> s_internalPreserveStackTrace = new Lazy<Action<Exception>>(GetInternalPreserveStackTrace);
 
-    public static Exception PreserveStackTrace (this Exception exception)
-    {
-      if (exception == null)
-        throw new ArgumentNullException ("exception");
+		public static Exception PreserveStackTrace(this Exception exception)
+		{
+			if (exception == null)
+				throw new ArgumentNullException("exception");
 
-      // http://weblogs.asp.net/fmarguerie/archive/2008/01/02/rethrowing-exceptions-and-preserving-the-full-call-stack-trace.aspx
+			// http://weblogs.asp.net/fmarguerie/archive/2008/01/02/rethrowing-exceptions-and-preserving-the-full-call-stack-trace.aspx
 
-      s_internalPreserveStackTrace.Value (exception);
-      return exception;
-    }
+			s_internalPreserveStackTrace.Value(exception);
+			return exception;
+		}
 
-    private static Action<Exception> GetInternalPreserveStackTrace ()
-    {
-      var methodInfo = typeof (Exception).GetMethod ("InternalPreserveStackTrace", BindingFlags.Instance | BindingFlags.NonPublic);
-      if (methodInfo == null)
-        throw new InvalidOperationException ("Type 'System.Exception' does not contain method InternalPreserveStackTrace().");
+		private static Action<Exception> GetInternalPreserveStackTrace()
+		{
+			var methodInfo = typeof(Exception).GetMethod("InternalPreserveStackTrace", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (methodInfo == null)
+				throw new InvalidOperationException("Type 'System.Exception' does not contain method InternalPreserveStackTrace().");
 
-      return (Action<Exception>) methodInfo.CreateDelegate (typeof (Action<Exception>));
-    }
-  }
+			return (Action<Exception>)Delegate.CreateDelegate(typeof(Action<Exception>), methodInfo);
+		}
+	}
 }

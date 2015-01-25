@@ -20,62 +20,56 @@ using System.Linq.Expressions;
 using Remotion.Linq.Clauses;
 using Remotion.Linq.Clauses.Expressions;
 using Remotion.Linq.Parsing.ExpressionTreeVisitors;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.IntermediateModel
 {
-  /// <summary>
-  /// Provides common functionality used by implementors of <see cref="IQuerySourceExpressionNode"/>.
-  /// </summary>
-  public class QuerySourceExpressionNodeUtility
-  {
-    /// <summary>
-    /// Replaces the given parameter with a back-reference to the <see cref="IQuerySource"/> corresponding to <paramref name="referencedNode"/>.
-    /// </summary>
-    /// <param name="referencedNode">The referenced node.</param>
-    /// <param name="parameterToReplace">The parameter to replace with a <see cref="QuerySourceReferenceExpression"/>.</param>
-    /// <param name="expression">The expression in which to replace the parameter.</param>
-    /// <param name="context">The clause generation context.</param>
-    /// <returns><paramref name="expression"/>, with <paramref name="parameterToReplace"/> replaced with a <see cref="QuerySourceReferenceExpression"/>
-    /// pointing to the clause corresponding to <paramref name="referencedNode"/>.</returns>
-    public static Expression ReplaceParameterWithReference (
-        IQuerySourceExpressionNode referencedNode, 
-        ParameterExpression parameterToReplace, 
-        Expression expression, 
-        ClauseGenerationContext context)
-    {
-      ArgumentUtility.CheckNotNull ("referencedNode", referencedNode);
-      ArgumentUtility.CheckNotNull ("parameterToReplace", parameterToReplace);
-      ArgumentUtility.CheckNotNull ("expression", expression);
-      ArgumentUtility.CheckNotNull ("context", context);
+	/// <summary>
+	/// Provides common functionality used by implementors of <see cref="IQuerySourceExpressionNode"/>.
+	/// </summary>
+	public class QuerySourceExpressionNodeUtility
+	{
+		/// <summary>
+		/// Replaces the given parameter with a back-reference to the <see cref="IQuerySource"/> corresponding to <paramref name="referencedNode"/>.
+		/// </summary>
+		/// <param name="referencedNode">The referenced node.</param>
+		/// <param name="parameterToReplace">The parameter to replace with a <see cref="QuerySourceReferenceExpression"/>.</param>
+		/// <param name="expression">The expression in which to replace the parameter.</param>
+		/// <param name="context">The clause generation context.</param>
+		/// <returns><paramref name="expression"/>, with <paramref name="parameterToReplace"/> replaced with a <see cref="QuerySourceReferenceExpression"/>
+		/// pointing to the clause corresponding to <paramref name="referencedNode"/>.</returns>
+		public static Expression ReplaceParameterWithReference(
+			IQuerySourceExpressionNode referencedNode,
+			ParameterExpression parameterToReplace,
+			Expression expression,
+			ClauseGenerationContext context)
+		{
+			var clause = GetQuerySourceForNode(referencedNode, context);
+			var referenceExpression = new QuerySourceReferenceExpression(clause);
 
-      var clause = GetQuerySourceForNode (referencedNode, context);
-      var referenceExpression = new QuerySourceReferenceExpression (clause);
+			return ReplacingExpressionTreeVisitor.Replace(parameterToReplace, referenceExpression, expression);
+		}
 
-      return ReplacingExpressionTreeVisitor.Replace (parameterToReplace, referenceExpression, expression);
-    }
-
-    /// <summary>
-    /// Gets the <see cref="IQuerySource"/> corresponding to the given <paramref name="node"/>, throwing an <see cref="InvalidOperationException"/>
-    /// if no such clause has been registered in the given <paramref name="context"/>.
-    /// </summary>
-    /// <param name="node">The node for which the <see cref="IQuerySource"/> should be returned.</param>
-    /// <param name="context">The clause generation context.</param>
-    /// <returns>The <see cref="IQuerySource"/> corresponding to <paramref name="node"/>.</returns>
-    public static IQuerySource GetQuerySourceForNode (IQuerySourceExpressionNode node, ClauseGenerationContext context)
-    {
-      try
-      {
-        return (IQuerySource) context.GetContextInfo (node);
-      }
-      catch (KeyNotFoundException ex)
-      {
-        var message = string.Format (
-            "Cannot retrieve an IQuerySource for the given {0}. Be sure to call Apply before calling methods that require IQuerySources, and pass in "
-            + "the same QuerySourceClauseMapping to both.",
-            node.GetType().Name);
-        throw new InvalidOperationException (message, ex);
-      }
-    }
-  }
+		/// <summary>
+		/// Gets the <see cref="IQuerySource"/> corresponding to the given <paramref name="node"/>, throwing an <see cref="InvalidOperationException"/>
+		/// if no such clause has been registered in the given <paramref name="context"/>.
+		/// </summary>
+		/// <param name="node">The node for which the <see cref="IQuerySource"/> should be returned.</param>
+		/// <param name="context">The clause generation context.</param>
+		/// <returns>The <see cref="IQuerySource"/> corresponding to <paramref name="node"/>.</returns>
+		public static IQuerySource GetQuerySourceForNode(IQuerySourceExpressionNode node, ClauseGenerationContext context)
+		{
+			try
+			{
+				return (IQuerySource)context.GetContextInfo(node);
+			}
+			catch (KeyNotFoundException ex)
+			{
+				var message = string.Format(
+					"Cannot retrieve an IQuerySource for the given {0}. Be sure to call Apply before calling methods that require IQuerySources, and pass in "
+					+ "the same QuerySourceClauseMapping to both.",
+					node.GetType().Name);
+				throw new InvalidOperationException(message, ex);
+			}
+		}
+	}
 }

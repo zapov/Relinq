@@ -16,62 +16,54 @@
 // 
 using System;
 using System.Collections.Generic;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.IntermediateModel
 {
-  /// <summary>
-  /// Encapsulates contextual information used while generating clauses from <see cref="IExpressionNode"/> instances.
-  /// </summary>
-  public struct ClauseGenerationContext
-  {
-    private readonly Dictionary<IExpressionNode, object> _lookup;
-    private readonly INodeTypeProvider _nodeTypeProvider;
+	/// <summary>
+	/// Encapsulates contextual information used while generating clauses from <see cref="IExpressionNode"/> instances.
+	/// </summary>
+	public struct ClauseGenerationContext
+	{
+		private readonly Dictionary<IExpressionNode, object> _lookup;
+		private readonly INodeTypeProvider _nodeTypeProvider;
 
-    public ClauseGenerationContext (
-        INodeTypeProvider nodeTypeProvider)
-        : this()
-    {
-      ArgumentUtility.CheckNotNull ("nodeTypeProvider", nodeTypeProvider);
+		public ClauseGenerationContext(
+			INodeTypeProvider nodeTypeProvider)
+			: this()
+		{
+			_lookup = new Dictionary<IExpressionNode, object>();
+			_nodeTypeProvider = nodeTypeProvider;
+		}
 
-      _lookup = new Dictionary<IExpressionNode, object> ();
-      _nodeTypeProvider = nodeTypeProvider;
-    }
+		public INodeTypeProvider NodeTypeProvider
+		{
+			get { return _nodeTypeProvider; }
+		}
 
-    public INodeTypeProvider NodeTypeProvider
-    {
-      get { return _nodeTypeProvider; }
-    }
+		public int Count
+		{
+			get { return _lookup.Count; }
+		}
 
-    public int Count
-    {
-      get { return _lookup.Count; }
-    }
+		public void AddContextInfo(IExpressionNode node, object contextInfo)
+		{
+			try
+			{
+				_lookup.Add(node, contextInfo);
+			}
+			catch (ArgumentException)
+			{
+				throw new InvalidOperationException("Node already has associated context info.");
+			}
+		}
 
-    public void AddContextInfo (IExpressionNode node, object contextInfo)
-    {
-      ArgumentUtility.CheckNotNull ("node", node);
-      ArgumentUtility.CheckNotNull ("contextInfo", contextInfo);
+		public object GetContextInfo(IExpressionNode node)
+		{
+			object contextInfo;
+			if (!_lookup.TryGetValue(node, out contextInfo))
+				throw new KeyNotFoundException("Node has no associated context info.");
 
-      try
-      {
-        _lookup.Add (node, contextInfo);
-      }
-      catch (ArgumentException)
-      {
-        throw new InvalidOperationException ("Node already has associated context info.");
-      }
-    }
-
-    public object GetContextInfo (IExpressionNode node)
-    {
-      ArgumentUtility.CheckNotNull ("node", node);
-
-      object contextInfo;
-      if (!_lookup.TryGetValue (node, out contextInfo))
-        throw new KeyNotFoundException ("Node has no associated context info.");
-
-      return contextInfo;
-    }
-  }
+			return contextInfo;
+		}
+	}
 }

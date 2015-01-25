@@ -14,39 +14,32 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Parsing.ExpressionTreeVisitors;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Parsing.Structure.IntermediateModel
 {
-  /// <summary>
-  /// Resolves an expression using <see cref="IExpressionNode.Resolve"/>, removing transparent identifiers and detecting subqueries
-  /// in the process. This is used by methods such as <see cref="SelectExpressionNode.GetResolvedSelector"/>, which are
-  /// used when a clause is created from an <see cref="IExpressionNode"/>.
-  /// </summary>
-  public class ExpressionResolver
-  {
-    public ExpressionResolver (IExpressionNode currentNode)
-    {
-      ArgumentUtility.CheckNotNull ("currentNode", currentNode);
+	/// <summary>
+	/// Resolves an expression using <see cref="IExpressionNode.Resolve"/>, removing transparent identifiers and detecting subqueries
+	/// in the process. This is used by methods such as <see cref="SelectExpressionNode.GetResolvedSelector"/>, which are
+	/// used when a clause is created from an <see cref="IExpressionNode"/>.
+	/// </summary>
+	public class ExpressionResolver
+	{
+		public ExpressionResolver(IExpressionNode currentNode)
+		{
+			CurrentNode = currentNode;
+		}
 
-      CurrentNode = currentNode;
-    }
+		public IExpressionNode CurrentNode { get; set; }
 
-    public IExpressionNode CurrentNode { get; set; }
-
-    public Expression GetResolvedExpression (
-        Expression unresolvedExpression, ParameterExpression parameterToBeResolved, ClauseGenerationContext clauseGenerationContext)
-    {
-      ArgumentUtility.CheckNotNull ("unresolvedExpression", unresolvedExpression);
-      ArgumentUtility.CheckNotNull ("parameterToBeResolved", parameterToBeResolved);
-
-      var sourceNode = CurrentNode.Source;
-      var resolvedExpression = sourceNode.Resolve (parameterToBeResolved, unresolvedExpression, clauseGenerationContext);
-      resolvedExpression = TransparentIdentifierRemovingExpressionTreeVisitor.ReplaceTransparentIdentifiers (resolvedExpression);
-      return resolvedExpression;
-    }
-  }
+		public Expression GetResolvedExpression(
+			Expression unresolvedExpression, ParameterExpression parameterToBeResolved, ClauseGenerationContext clauseGenerationContext)
+		{
+			var sourceNode = CurrentNode.Source;
+			var resolvedExpression = sourceNode.Resolve(parameterToBeResolved, unresolvedExpression, clauseGenerationContext);
+			resolvedExpression = TransparentIdentifierRemovingExpressionTreeVisitor.ReplaceTransparentIdentifiers(resolvedExpression);
+			return resolvedExpression;
+		}
+	}
 }

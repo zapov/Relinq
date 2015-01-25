@@ -14,23 +14,21 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents a <see cref="SequenceFromSequenceResultOperatorBase"/> that is executed on a sequence, returning a new sequence with the same
-  /// item type as its result.
-  /// </summary>
-  public abstract class SequenceTypePreservingResultOperatorBase : SequenceFromSequenceResultOperatorBase
-  {
-    public override IStreamedDataInfo GetOutputDataInfo (IStreamedDataInfo inputInfo)
-    {
-      var inputSequenceInfo = ArgumentUtility.CheckNotNullAndType<StreamedSequenceInfo> ("inputInfo", inputInfo);
-      return new StreamedSequenceInfo (typeof (IQueryable<>).MakeGenericType (inputSequenceInfo.ResultItemType), inputSequenceInfo.ItemExpression);
-    }
-  }
+	/// <summary>
+	/// Represents a <see cref="SequenceFromSequenceResultOperatorBase"/> that is executed on a sequence, returning a new sequence with the same
+	/// item type as its result.
+	/// </summary>
+	public abstract class SequenceTypePreservingResultOperatorBase : SequenceFromSequenceResultOperatorBase
+	{
+		public override IStreamedDataInfo GetOutputDataInfo(IStreamedDataInfo inputInfo)
+		{
+			var inputSequenceInfo = (StreamedSequenceInfo)inputInfo;
+			return new StreamedSequenceInfo(typeof(IQueryable<>).MakeGenericType(inputSequenceInfo.ResultItemType), inputSequenceInfo.ItemExpression);
+		}
+	}
 }

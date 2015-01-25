@@ -14,28 +14,24 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using Remotion.Linq.Clauses.Expressions;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses
 {
-  /// <summary>
-  /// Aggregates all objects needed in the process of cloning a <see cref="QueryModel"/> and its clauses.
-  /// </summary>
-  public sealed class CloneContext
-  {
-    public CloneContext (QuerySourceMapping querySourceMapping)
-    {
-      ArgumentUtility.CheckNotNull ("querySourceMapping", querySourceMapping);
+	/// <summary>
+	/// Aggregates all objects needed in the process of cloning a <see cref="QueryModel"/> and its clauses.
+	/// </summary>
+	public sealed class CloneContext
+	{
+		public CloneContext(QuerySourceMapping querySourceMapping)
+		{
+			QuerySourceMapping = querySourceMapping;
+		}
 
-      QuerySourceMapping = querySourceMapping;
-    }
-
-    /// <summary>
-    /// Gets the clause mapping used during the cloning process. This is used to adjust the <see cref="QuerySourceReferenceExpression"/> instances
-    /// of clauses to point to clauses in the cloned <see cref="QueryModel"/>.
-    /// </summary>
-    public QuerySourceMapping QuerySourceMapping { get; private set; }
-  }
+		/// <summary>
+		/// Gets the clause mapping used during the cloning process. This is used to adjust the <see cref="QuerySourceReferenceExpression"/> instances
+		/// of clauses to point to clauses in the cloned <see cref="QueryModel"/>.
+		/// </summary>
+		public QuerySourceMapping QuerySourceMapping { get; private set; }
+	}
 }

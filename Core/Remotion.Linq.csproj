@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Core</RootNamespace>
-    <AssemblyName>Core</AssemblyName>
+    <AssemblyName>Remotion.Linq</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -29,6 +29,13 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\Remotion.Linq.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\relinq.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -144,7 +151,6 @@
     <Compile Include="Parsing\ExpressionTreeVisitors\TransparentIdentifierRemovingExpressionTreeVisitor.cs" />
     <Compile Include="Parsing\ExpressionTreeVisitors\TreeEvaluation\EvaluatableTreeFindingExpressionTreeVisitor.cs" />
     <Compile Include="Parsing\ExpressionTreeVisitors\TreeEvaluation\PartialEvaluationInfo.cs" />
-    <Compile Include="Parsing\ParserException.Obsolete.cs" />
     <Compile Include="Parsing\Structure\ExpressionTreeParser.cs" />
     <Compile Include="Parsing\Structure\ExpressionTreeProcessors\CompoundExpressionTreeProcessor.cs" />
     <Compile Include="Parsing\Structure\ExpressionTreeProcessors\NullExpressionTreeProcessor.cs" />
@@ -219,9 +225,6 @@
     <Compile Include="Transformations\SubQueryFromClauseFlattener.cs" />
     <Compile Include="UniqueIdentifierGenerator.cs" />
     <Compile Include="Utilities\ReflectionUtility.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Parsing\ExpressionTreeVisitors\PartialEvaluatingExpressionTreeVisitor.cs.bak" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

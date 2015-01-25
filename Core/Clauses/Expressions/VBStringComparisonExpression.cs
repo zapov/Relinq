@@ -14,95 +14,86 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using System.Linq.Expressions;
 using Remotion.Linq.Clauses.ExpressionTreeVisitors;
 using Remotion.Linq.Parsing;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.Expressions
 {
-  /// <summary>
-  /// Represents a VB-specific comparison expression.
-  /// </summary>
-  /// <remarks>
-  /// <para>
-  /// To explicitly support this expression type, implement <see cref="IVBSpecificExpressionVisitor"/>.
-  /// To treat this expression as if it were an ordinary <see cref="BinaryExpression"/>, call its <see cref="Reduce"/> method and visit the result.
-  /// </para>
-  /// <para>
-  /// Subclasses of <see cref="ThrowingExpressionTreeVisitor"/> that do not implement <see cref="IVBSpecificExpressionVisitor"/> will, by default, 
-  /// automatically reduce this expression type to <see cref="BinaryExpression"/> in the 
-  /// <see cref="ThrowingExpressionTreeVisitor.VisitExtensionExpression"/> method.
-  /// </para>
-  /// <para>
-  /// Subclasses of <see cref="ExpressionTreeVisitor"/> that do not implement <see cref="IVBSpecificExpressionVisitor"/> will, by default, 
-  /// ignore this expression and visit its child expressions via the <see cref="ExpressionTreeVisitor.VisitExtensionExpression"/> and 
-  /// <see cref="VisitChildren"/> methods.
-  /// </para>
-  /// </remarks>
-  public class VBStringComparisonExpression : ExtensionExpression
-  {
-    public const ExpressionType ExpressionType = (ExpressionType) 100003;
+	/// <summary>
+	/// Represents a VB-specific comparison expression.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// To explicitly support this expression type, implement <see cref="IVBSpecificExpressionVisitor"/>.
+	/// To treat this expression as if it were an ordinary <see cref="BinaryExpression"/>, call its <see cref="Reduce"/> method and visit the result.
+	/// </para>
+	/// <para>
+	/// Subclasses of <see cref="ThrowingExpressionTreeVisitor"/> that do not implement <see cref="IVBSpecificExpressionVisitor"/> will, by default, 
+	/// automatically reduce this expression type to <see cref="BinaryExpression"/> in the 
+	/// <see cref="ThrowingExpressionTreeVisitor.VisitExtensionExpression"/> method.
+	/// </para>
+	/// <para>
+	/// Subclasses of <see cref="ExpressionTreeVisitor"/> that do not implement <see cref="IVBSpecificExpressionVisitor"/> will, by default, 
+	/// ignore this expression and visit its child expressions via the <see cref="ExpressionTreeVisitor.VisitExtensionExpression"/> and 
+	/// <see cref="VisitChildren"/> methods.
+	/// </para>
+	/// </remarks>
+	public class VBStringComparisonExpression : ExtensionExpression
+	{
+		public const ExpressionType ExpressionType = (ExpressionType)100003;
 
-    private readonly Expression _comparison;
-    private readonly bool _textCompare;
+		private readonly Expression _comparison;
+		private readonly bool _textCompare;
 
-    public VBStringComparisonExpression (Expression comparison, bool textCompare)
-        : base(comparison.Type, ExpressionType)
-    {
-      ArgumentUtility.CheckNotNull ("comparison", comparison);
+		public VBStringComparisonExpression(Expression comparison, bool textCompare)
+			: base(comparison.Type, ExpressionType)
+		{
+			_comparison = comparison;
+			_textCompare = textCompare;
+		}
 
-      _comparison = comparison;
-      _textCompare = textCompare;
-    }
+		public Expression Comparison
+		{
+			get { return _comparison; }
+		}
 
-    public Expression Comparison
-    {
-      get { return _comparison; }
-    }
+		public bool TextCompare
+		{
+			get { return _textCompare; }
+		}
 
-    public bool TextCompare
-    {
-      get { return _textCompare; }
-    }
+		public override bool CanReduce
+		{
+			get { return true; }
+		}
 
-    public override bool CanReduce
-    {
-      get { return true; }
-    }
+		public override Expression Reduce()
+		{
+			return _comparison;
+		}
 
-    public override Expression Reduce ()
-    {
-      return _comparison;
-    }
+		protected internal override Expression VisitChildren(ExpressionTreeVisitor visitor)
+		{
+			var newExpression = visitor.VisitExpression(_comparison);
+			if (newExpression != _comparison)
+				return new VBStringComparisonExpression(newExpression, _textCompare);
+			else
+				return this;
+		}
 
-    protected internal override Expression VisitChildren (ExpressionTreeVisitor visitor)
-    {
-      ArgumentUtility.CheckNotNull ("visitor", visitor);
+		public override Expression Accept(ExpressionTreeVisitor visitor)
+		{
+			var specificVisitor = visitor as IVBSpecificExpressionVisitor;
+			if (specificVisitor != null)
+				return specificVisitor.VisitVBStringComparisonExpression(this);
+			else
+				return base.Accept(visitor);
+		}
 
-      var newExpression = visitor.VisitExpression (_comparison);
-      if (newExpression != _comparison)
-        return new VBStringComparisonExpression (newExpression, _textCompare);
-      else
-        return this;
-    }
-
-    public override Expression Accept (ExpressionTreeVisitor visitor)
-    {
-      ArgumentUtility.CheckNotNull ("visitor", visitor);
-
-      var specificVisitor = visitor as IVBSpecificExpressionVisitor;
-      if (specificVisitor != null)
-        return specificVisitor.VisitVBStringComparisonExpression (this);
-      else
-        return base.Accept (visitor);
-    }
-
-    public override string ToString ()
-    {
-      return string.Format ("VBCompareString({0}, {1})", FormattingExpressionTreeVisitor.Format(Comparison), TextCompare);
-    }
-    
-  }
+		public override string ToString()
+		{
+			return string.Format("VBCompareString({0}, {1})", FormattingExpressionTreeVisitor.Format(Comparison), TextCompare);
+		}
+	}
 }

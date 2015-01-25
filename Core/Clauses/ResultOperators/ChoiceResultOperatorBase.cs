@@ -14,28 +14,26 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 // 
-using System;
 using Remotion.Linq.Clauses.StreamedData;
-using Remotion.Utilities;
 
 namespace Remotion.Linq.Clauses.ResultOperators
 {
-  /// <summary>
-  /// Represents a <see cref="ValueFromSequenceResultOperatorBase"/> that is executed on a sequence, choosing a single item for its result.
-  /// </summary>
-  public abstract class ChoiceResultOperatorBase : ValueFromSequenceResultOperatorBase
-  {
-    protected ChoiceResultOperatorBase (bool returnDefaultWhenEmpty)
-    {
-      ReturnDefaultWhenEmpty = returnDefaultWhenEmpty;
-    }
+	/// <summary>
+	/// Represents a <see cref="ValueFromSequenceResultOperatorBase"/> that is executed on a sequence, choosing a single item for its result.
+	/// </summary>
+	public abstract class ChoiceResultOperatorBase : ValueFromSequenceResultOperatorBase
+	{
+		protected ChoiceResultOperatorBase(bool returnDefaultWhenEmpty)
+		{
+			ReturnDefaultWhenEmpty = returnDefaultWhenEmpty;
+		}
 
-    public bool ReturnDefaultWhenEmpty { get; set; }
+		public bool ReturnDefaultWhenEmpty { get; set; }
 
-    public override IStreamedDataInfo GetOutputDataInfo (IStreamedDataInfo inputInfo)
-    {
-      var inputSequenceInfo = ArgumentUtility.CheckNotNullAndType<StreamedSequenceInfo> ("inputInfo", inputInfo);
-      return new StreamedSingleValueInfo (inputSequenceInfo.ResultItemType, ReturnDefaultWhenEmpty);
-    }
-  }
+		public override IStreamedDataInfo GetOutputDataInfo(IStreamedDataInfo inputInfo)
+		{
+			var inputSequenceInfo = (StreamedSequenceInfo)inputInfo;
+			return new StreamedSingleValueInfo(inputSequenceInfo.ResultItemType, ReturnDefaultWhenEmpty);
+		}
+	}
 }
