@@ -15,6 +15,7 @@
 // under the License.
 // 
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
 using Remotion.Linq.Parsing.Structure;
@@ -78,6 +79,27 @@ namespace Remotion.Linq
 			get { return _queryableType; }
 		}
 
+		struct Pair : IEquatable<Pair>
+		{
+			private readonly Type Queryable;
+			private readonly Type Target;
+
+			public Pair(Type qt, Type t)
+			{
+				this.Queryable = qt;
+				this.Target = t;
+			}
+
+			public override int GetHashCode() { return Target.GetHashCode(); }
+			public override bool Equals(object obj) { return Equals((Pair)obj); }
+			public bool Equals(Pair other)
+			{
+				return other.Queryable == Queryable && other.Target == Target;
+			}
+		}
+
+		private static readonly ConcurrentDictionary<Pair, object> QueryFactoryCache = new ConcurrentDictionary<Pair, object>(1, 117);
+
 		/// <summary>
 		/// Creates a new <see cref="IQueryable"/> (of type <see cref="QueryableType"/> with <typeparamref name="T"/> as its generic argument) that
 		/// represents the query defined by <paramref name="expression"/> and is able to enumerate its results.
@@ -87,8 +109,20 @@ namespace Remotion.Linq
 		/// <returns>An <see cref="IQueryable{T}"/> that represents the query defined by <paramref name="expression"/>.</returns>
 		public override IQueryable<T> CreateQuery<T>(Expression expression)
 		{
-			//TODO: cache for make generic type
-			return (IQueryable<T>)Activator.CreateInstance(QueryableType.MakeGenericType(typeof(T)), this, expression);
+			var pair = new Pair(_queryableType, typeof(T));
+			object result;
+			if (QueryFactoryCache.TryGetValue(pair, out result))
+				return (result as Func<DefaultQueryProvider, Expression, IQueryable<T>>)(this, expression);
+
+			var target = QueryableType.MakeGenericType(typeof(T));
+			var param1 = Expression.Parameter(typeof(DefaultQueryProvider));
+			var param2 = Expression.Parameter(typeof(Expression));
+			var ctor = target.GetConstructor(new Type[] { typeof(DefaultQueryProvider), typeof(Expression) });
+			var newExp = Expression.New(ctor, param1, param2);
+			var lambda = Expression.Lambda<Func<DefaultQueryProvider, Expression, IQueryable<T>>>(newExp, param1, param2);
+			var func = lambda.Compile();
+			QueryFactoryCache.TryAdd(pair, func);
+			return func(this, expression);
 		}
 	}
 }

@@ -15,6 +15,7 @@
 // under the License.
 // 
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -75,8 +76,15 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.Predefined
 			return expression;
 		}
 
+		private static readonly ConcurrentDictionary<MethodInfo, IMethodCallExpressionTransformerAttribute> MethodCallExpressionTransformerCache
+			= new ConcurrentDictionary<MethodInfo, IMethodCallExpressionTransformerAttribute>(1, 117);
+
 		private static IMethodCallExpressionTransformerAttribute GetTransformerProvider(MethodInfo methodInfo)
 		{
+			IMethodCallExpressionTransformerAttribute result;
+			if (MethodCallExpressionTransformerCache.TryGetValue(methodInfo, out result))
+				return result;
+
 			var attributes = methodInfo.GetCustomAttributes(true).OfType<IMethodCallExpressionTransformerAttribute>().ToArray();
 
 			if (attributes.Length > 1)
@@ -88,7 +96,9 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.Transformation.Predefined
 				throw new InvalidOperationException(message);
 			}
 
-			return attributes.SingleOrDefault();
+			result = attributes.SingleOrDefault();
+			MethodCallExpressionTransformerCache.TryAdd(methodInfo, result);
+			return result;
 		}
 
 		private static Expression ApplyTransformer(IMethodCallExpressionTransformerAttribute provider, MethodCallExpression methodCallExpression)
