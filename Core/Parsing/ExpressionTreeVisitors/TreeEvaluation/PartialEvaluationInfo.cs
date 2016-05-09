@@ -1,3 +1,4 @@
+using System;
 // Copyright (c) rubicon IT GmbH, www.rubicon.eu
 //
 // See the NOTICE file distributed with this work for additional information
@@ -16,6 +17,8 @@
 // 
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading;
 
 namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.TreeEvaluation
 {
@@ -28,9 +31,21 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.TreeEvaluation
 			get { return _evaluatableExpressions.Count; }
 		}
 
-		public void AddEvaluatableExpression(Expression expression)
+		private static readonly MemberInfo Now = typeof(DateTime).GetMember("Now", BindingFlags.Static | BindingFlags.Public)[0];
+		private static readonly MemberInfo UtcNow = typeof(DateTime).GetMember("UtcNow", BindingFlags.Static | BindingFlags.Public)[0];
+		private static readonly MemberInfo Today = typeof(DateTime).GetMember("Today", BindingFlags.Static | BindingFlags.Public)[0];
+		private static readonly MemberInfo Principal = typeof(Thread).GetMember("CurrentPrincipal", BindingFlags.Static | BindingFlags.Public)[0];
+
+		public bool AddEvaluatableExpression(Expression expression)
 		{
+			var me = expression as MemberExpression;
+			if (me != null && me.NodeType == ExpressionType.MemberAccess)
+			{
+				if (me.Member == Now || me.Member == UtcNow || me.Member == Today || me.Member == Principal)
+					return false;
+			}
 			_evaluatableExpressions.Add(expression);
+			return true;
 		}
 
 		public bool IsEvaluatableExpression(Expression expression)

@@ -70,7 +70,7 @@ namespace Remotion.Linq.Parsing.ExpressionTreeVisitors.TreeEvaluation
 
 			// If the current subtree is still marked to be evaluatable, put it into the result list.
 			if (_isCurrentSubtreeEvaluatable)
-				_partialEvaluationInfo.AddEvaluatableExpression(expression);
+				_isCurrentSubtreeEvaluatable = _partialEvaluationInfo.AddEvaluatableExpression(expression);
 
 			// Before returning to the parent node, set the evaluatability of the parent node.
 			// The parent node can be evaluatable only if (among other things):
